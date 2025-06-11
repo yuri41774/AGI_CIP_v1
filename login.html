@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Página de Login e Cadastro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style> body { font-family: 'Inter', sans-serif; } </style>
+</head>
+<body class="bg-orange-500 flex items-center justify-center min-h-screen">
+    <div class="relative flex flex-col m-6 space-y-8 bg-white shadow-2xl rounded-2xl md:flex-row md:space-y-0">
+        <!-- Coluna da Esquerda (Formulário) -->
+        <div class="flex flex-col justify-center p-8 md:p-14 overflow-hidden">
+            <div id="forms-container" class="relative">
+                <!-- Seção de Login -->
+                <div id="login-section" class="form-section">
+                    <h1 class="mb-3 text-4xl font-bold">Bem-vindo de volta</h1>
+                    <p class="font-light text-gray-400 mb-8">Que bom te ver novamente!</p>
+                    <form id="login-form">
+                        <div class="py-4"><label for="login-email" class="mb-2 text-md font-medium">Email</label><input type="email" id="login-email" required class="w-full p-2 border rounded-md"></div>
+                        <div class="py-4"><label for="login-password" class="mb-2 text-md font-medium">Senha</label><input type="password" id="login-password" required class="w-full p-2 border rounded-md"></div>
+                        <button type="submit" class="w-full bg-orange-500 text-white p-3 rounded-lg mt-4 hover:bg-orange-600 font-bold">Entrar</button>
+                    </form>
+                    <div class="text-center mt-6"><p class="text-gray-500">Não tem uma conta? <a href="#" id="show-register-link" class="font-bold text-orange-600">Criar conta</a></p></div>
+                </div>
+                <!-- Seção de Cadastro -->
+                <div id="register-section" class="form-section opacity-0 absolute pointer-events-none">
+                    <h1 class="mb-3 text-4xl font-bold">Crie sua conta</h1>
+                    <p class="font-light text-gray-400 mb-4">É rápido e fácil. Vamos começar.</p>
+                    <form id="register-form">
+                        <div class="py-2"><label for="register-name" class="mb-2 text-md font-medium">Nome Completo</label><input type="text" id="register-name" required class="w-full p-2 border rounded-md"></div>
+                        <div class="py-2"><label for="register-email" class="mb-2 text-md font-medium">Email</label><input type="email" id="register-email" required class="w-full p-2 border rounded-md"></div>
+                        <div class="py-2"><label for="register-password" class="mb-2 text-md font-medium">Senha</label><input type="password" id="register-password" required class="w-full p-2 border rounded-md" placeholder="Mínimo 6 caracteres"></div>
+                        <button type="submit" class="w-full bg-green-600 text-white p-3 rounded-lg mt-6 hover:bg-green-700 font-bold">Criar Conta</button>
+                    </form>
+                    <div class="text-center mt-6"><p class="text-gray-500">Já tem uma conta? <a href="#" id="show-login-link" class="font-bold text-orange-600">Entrar</a></p></div>
+                </div>
+            </div>
+        </div>
+        <!-- Coluna da Direita (Texto) -->
+        <div class="relative hidden md:flex items-center justify-center bg-gray-800 rounded-r-2xl text-white text-center p-8">
+            <div><h2 class="text-4xl font-extrabold">Comunidade<br>Internacional<br>Plenitude</h2></div>
+        </div>
+    </div>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
+        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
+        const firebaseConfig = { apiKey: "AIzaSyBKFZ8Zp0e9V6pH_hM-UIITTlIEomlTDLQ", authDomain: "agi-v1-e4000.firebaseapp.com", projectId: "agi-v1-e4000", storageBucket: "agi-v1-e4000.appspot.com", messagingSenderId: "908312431193", appId: "1:908312431193:web:50c5aac95753327365bf48" };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        
+        const loginSection = document.getElementById('login-section');
+        const registerSection = document.getElementById('register-section');
+        
+        document.getElementById('show-register-link').addEventListener('click', (e) => { e.preventDefault(); loginSection.classList.add('opacity-0', 'pointer-events-none'); registerSection.classList.remove('opacity-0', 'pointer-events-none'); });
+        document.getElementById('show-login-link').addEventListener('click', (e) => { e.preventDefault(); registerSection.classList.add('opacity-0', 'pointer-events-none'); loginSection.classList.remove('opacity-0', 'pointer-events-none'); });
+        
+        document.getElementById('login-form').addEventListener('submit', (e) => { e.preventDefault(); signInWithEmailAndPassword(auth, e.target['login-email'].value, e.target['login-password'].value).catch(err => alert(err.message)); });
+        
+        document.getElementById('register-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = e.target['register-name'].value;
+            const email = e.target['register-email'].value;
+            const password = e.target['register-password'].value;
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                await setDoc(doc(db, "users", userCredential.user.uid), {
+                    uid: userCredential.user.uid,
+                    displayName: name,
+                    email: email,
+                    photoURL: null,
+                    bio: `Olá! Eu sou ${name}.`,
+                    status: 'online',
+                    friends: [],
+                });
+            } catch (error) { alert(error.message); }
+        });
+        
+        onAuthStateChanged(auth, user => { if (user) window.location.href = './dashboard.html'; });
+    </script>
+</body>
+</html>

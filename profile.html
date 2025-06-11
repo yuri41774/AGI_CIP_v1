@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meu Perfil</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .feed-post { animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="bg-orange-50">
+
+    <!-- Header -->
+    <header class="bg-white shadow-sm p-4 flex justify-between items-center">
+        <a href="./dashboard.html" class="text-2xl font-bold text-orange-600">SocialWeb</a>
+        <a href="./dashboard.html" class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 font-bold">Voltar ao Feed</a>
+    </header>
+
+    <!-- Conteúdo do Perfil -->
+    <main class="container mx-auto px-4 py-8 max-w-3xl">
+        <div class="bg-white p-8 rounded-2xl shadow-lg mb-8">
+            
+            <!-- Visão de Exibição -->
+            <div id="profile-view">
+                <div class="flex flex-col md:flex-row items-center md:items-start space-y-4 md:space-y-0 md:space-x-8">
+                    <div class="relative group">
+                        <img id="view-avatar" src="https://i.pravatar.cc/150?u=user" class="w-32 h-32 rounded-full border-4 border-orange-200" alt="Avatar">
+                         <button id="change-photo-view-btn" class="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                            <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                        </button>
+                    </div>
+                    <div class="flex-1 text-center md:text-left">
+                        <h2 id="view-displayName" class="text-3xl font-bold text-gray-800">Nome do Usuário</h2>
+                        <p id="view-email" class="text-gray-500">email@exemplo.com</p>
+                        <p id="view-bio" class="text-gray-600 mt-4 bg-gray-50 p-3 rounded-lg">Esta é a biografia do usuário.</p>
+                    </div>
+                </div>
+                 <hr class="my-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
+                    <div><span class="font-semibold text-gray-500 block">Celular</span><p id="view-phone" class="text-gray-800">Não informado</p></div>
+                    <div><span class="font-semibold text-gray-500 block">Data de Nascimento</span><p id="view-birthdate" class="text-gray-800">Não informado</p></div>
+                    <div><span class="font-semibold text-gray-500 block">Gênero</span><p id="view-gender" class="text-gray-800 capitalize">Não informado</p></div>
+                    <div><span class="font-semibold text-gray-500 block">Estado Civil</span><p id="view-marital-status" class="text-gray-800 capitalize">Não informado</p></div>
+                </div>
+                <div class="text-right mt-6">
+                    <button id="edit-profile-btn" class="bg-orange-500 text-white px-6 py-2 rounded-lg hover:bg-orange-600 font-semibold">Editar Perfil</button>
+                </div>
+            </div>
+
+            <!-- Visão de Edição (oculta) -->
+            <div id="profile-edit" class="hidden">
+                 <h2 class="text-3xl font-bold text-gray-800 mb-6">Editar Perfil</h2>
+                 <form id="edit-form">
+                    <div class="space-y-4">
+                        <div><label for="input-displayName" class="block text-gray-700 font-semibold mb-2">Nome de Exibição</label><input type="text" id="input-displayName" class="w-full p-2 border border-gray-300 rounded-lg"></div>
+                        <div><label for="input-phone" class="block text-gray-700 font-semibold mb-2">Celular</label><input type="tel" id="input-phone" class="w-full p-2 border border-gray-300 rounded-lg"></div>
+                        <div><label for="input-birthdate" class="block text-gray-700 font-semibold mb-2">Data de Nascimento</label><input type="date" id="input-birthdate" class="w-full p-2 border border-gray-300 rounded-lg"></div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div><label for="input-gender" class="block text-gray-700 font-semibold mb-2">Gênero</label><select id="input-gender" class="w-full p-2 border border-gray-300 rounded-lg bg-white"><option value="nao-informar">Prefiro não informar</option><option value="masculino">Masculino</option><option value="feminino">Feminino</option><option value="outro">Outro</option></select></div>
+                            <div><label for="input-marital-status" class="block text-gray-700 font-semibold mb-2">Estado Civil</label><select id="input-marital-status" class="w-full p-2 border border-gray-300 rounded-lg bg-white"><option value="">Selecione...</option><option value="solteiro">Solteiro(a)</option><option value="casado">Casado(a)</option><option value="divorciado">Divorciado(a)</option><option value="viuvo">Viúvo(a)</option></select></div>
+                        </div>
+                        <div><label for="input-bio" class="block text-gray-700 font-semibold mb-2">Biografia</label><textarea id="input-bio" rows="4" class="w-full p-2 border border-gray-300 rounded-lg"></textarea></div>
+                    </div>
+                    <div class="flex justify-end space-x-4 mt-6">
+                        <button id="cancel-edit-btn" type="button" class="bg-gray-200 text-gray-800 px-6 py-2 rounded-lg hover:bg-gray-300 font-semibold">Cancelar</button>
+                        <button id="save-profile-btn" type="submit" class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 font-semibold disabled:bg-gray-400">Salvar Alterações</button>
+                    </div>
+                 </form>
+            </div>
+        </div>
+
+        <!-- Linha do Tempo de Posts -->
+        <div>
+            <h3 class="text-2xl font-bold text-gray-800 mb-6">Minhas Publicações</h3>
+            <div id="timeline-container" class="space-y-6">
+                <!-- Posts do usuário serão injetados aqui -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Modais (Informação, Edição de Post, Exclusão de Post) -->
+    <div id="feature-info-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 max-w-sm w-full text-center">
+            <h3 class="text-2xl font-bold text-gray-900 mb-2">Em Breve</h3>
+            <p class="text-gray-500 mb-6">A edição de foto de perfil ainda não foi implementada.</p>
+            <button id="feature-info-modal-close-btn" class="w-full bg-orange-500 text-white p-3 rounded-lg hover:bg-orange-600 font-bold">Entendido</button>
+        </div>
+    </div>
+    <div id="edit-post-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg"><h3 class="text-xl font-bold mb-4">Editar Post</h3><form id="edit-post-form"><textarea id="edit-post-content" class="w-full p-2 border rounded-lg" rows="5"></textarea><div class="flex justify-end space-x-4 mt-4"><button type="button" id="cancel-edit-post-btn" class="bg-gray-200 px-4 py-2 rounded-lg">Cancelar</button><button type="submit" class="bg-green-500 text-white px-4 py-2 rounded-lg">Salvar</button></div></form></div>
+    </div>
+    <div id="delete-confirm-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-lg shadow-xl p-6 text-center"><h3 class="text-lg font-bold">Tem certeza?</h3><p class="text-gray-600 my-4">Esta ação não pode ser desfeita.</p><div class="flex justify-center space-x-4"><button id="cancel-delete-btn" class="bg-gray-200 px-6 py-2 rounded-lg">Cancelar</button><button id="confirm-delete-btn" class="bg-red-600 text-white px-6 py-2 rounded-lg">Excluir</button></div></div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, collection, query, where, orderBy, onSnapshot, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBKFZ8Zp0e9V6pH_hM-UIITTlIEomlTDLQ",
+            authDomain: "agi-v1-e4000.firebaseapp.com",
+            projectId: "agi-v1-e4000",
+            storageBucket: "agi-v1-e4000.appspot.com",
+            messagingSenderId: "908312431193",
+            appId: "1:908312431193:web:50c5aac95753327365bf48",
+            measurementId: "G-QVVY022NVS"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let currentUser = null;
+
+        const DOM = {
+            profileView: document.getElementById('profile-view'),
+            profileEdit: document.getElementById('profile-edit'),
+            editProfileBtn: document.getElementById('edit-profile-btn'),
+            cancelEditBtn: document.getElementById('cancel-edit-btn'),
+            editForm: document.getElementById('edit-form'),
+            changePhotoViewBtn: document.getElementById('change-photo-view-btn'),
+            infoModal: document.getElementById('feature-info-modal'),
+            infoModalCloseBtn: document.getElementById('feature-info-modal-close-btn'),
+            timelineContainer: document.getElementById('timeline-container'),
+            editPostModal: document.getElementById('edit-post-modal'),
+            editPostForm: document.getElementById('edit-post-form'),
+            editPostContent: document.getElementById('edit-post-content'),
+            cancelEditPostBtn: document.getElementById('cancel-edit-post-btn'),
+            deleteConfirmModal: document.getElementById('delete-confirm-modal'),
+            cancelDeleteBtn: document.getElementById('cancel-delete-btn'),
+            confirmDeleteBtn: document.getElementById('confirm-delete-btn'),
+        };
+
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                loadUserProfile(user);
+                fetchUserPosts(user);
+                initializeEventListeners();
+            } else {
+                window.location.href = './login.html';
+            }
+        });
+
+        function initializeEventListeners() {
+            DOM.editProfileBtn.addEventListener('click', toggleEditMode);
+            DOM.cancelEditBtn.addEventListener('click', toggleEditMode);
+            DOM.changePhotoViewBtn.addEventListener('click', () => showInfoModal("A edição de foto de perfil ainda não foi implementada."));
+            DOM.infoModalCloseBtn.addEventListener('click', () => DOM.infoModal.classList.add('hidden'));
+            DOM.editForm.addEventListener('submit', handleProfileSave);
+            DOM.timelineContainer.addEventListener('click', handlePostActions);
+            DOM.cancelEditPostBtn.addEventListener('click', () => DOM.editPostModal.classList.add('hidden'));
+            DOM.editPostForm.addEventListener('submit', handlePostEditSubmit);
+            DOM.cancelDeleteBtn.addEventListener('click', () => DOM.deleteConfirmModal.classList.add('hidden'));
+            DOM.confirmDeleteBtn.addEventListener('click', handlePostDeleteConfirm);
+        }
+
+        async function loadUserProfile(user) {
+            const userRef = doc(db, "users", user.uid);
+            let userSnap = await getDoc(userRef);
+
+            if (!userSnap.exists()) {
+                const defaultProfile = {
+                    uid: user.uid,
+                    displayName: user.displayName || user.email.split('@')[0],
+                    email: user.email,
+                    photoURL: user.photoURL
+                };
+                await setDoc(userRef, defaultProfile, { merge: true });
+                userSnap = await getDoc(userRef);
+            }
+
+            const userData = userSnap.data();
+            const avatarUrl = userData.photoURL || `https://i.pravatar.cc/150?u=${user.uid}`;
+            
+            document.getElementById('view-avatar').src = avatarUrl;
+            // CORREÇÃO: O botão de upload de foto não existe no modo de edição, então a linha abaixo foi removida para evitar o erro.
+            // document.getElementById('edit-avatar-preview').src = avatarUrl; 
+            document.getElementById('view-displayName').textContent = userData.displayName || 'Não informado';
+            document.getElementById('view-email').textContent = userData.email || 'Não informado';
+            document.getElementById('view-bio').textContent = userData.bio || 'Sem biografia.';
+            document.getElementById('view-phone').textContent = userData.phone || 'Não informado';
+            document.getElementById('view-birthdate').textContent = userData.birthdate ? new Date(userData.birthdate + 'T00:00:00').toLocaleDateString('pt-BR') : 'Não informado';
+            document.getElementById('view-gender').textContent = userData.gender || 'Não informado';
+            document.getElementById('view-marital-status').textContent = userData.maritalStatus || 'Não informado';
+            document.getElementById('input-displayName').value = userData.displayName || '';
+            document.getElementById('input-bio').value = userData.bio || '';
+            document.getElementById('input-phone').value = userData.phone || '';
+            document.getElementById('input-birthdate').value = userData.birthdate || '';
+            document.getElementById('input-gender').value = userData.gender || 'nao-informar';
+            document.getElementById('input-marital-status').value = userData.maritalStatus || '';
+        }
+
+        function toggleEditMode() {
+            DOM.profileView.classList.toggle('hidden');
+            DOM.profileEdit.classList.toggle('hidden');
+        }
+
+        function showInfoModal(message) {
+            document.getElementById('feature-info-modal-message').textContent = message;
+            DOM.infoModal.classList.remove('hidden');
+        }
+
+        async function handleProfileSave(e) {
+            e.preventDefault();
+            const saveButton = document.getElementById('save-profile-btn');
+            saveButton.disabled = true;
+            saveButton.textContent = "Salvando...";
+
+            const updatedProfile = {
+                displayName: document.getElementById('input-displayName').value.trim(),
+                bio: document.getElementById('input-bio').value.trim(),
+                phone: document.getElementById('input-phone').value.trim(),
+                birthdate: document.getElementById('input-birthdate').value,
+                gender: document.getElementById('input-gender').value,
+                maritalStatus: document.getElementById('input-marital-status').value,
+            };
+
+            try {
+                await setDoc(doc(db, "users", currentUser.uid), updatedProfile, { merge: true });
+                await loadUserProfile(currentUser); 
+                toggleEditMode();
+            } catch (error) {
+                console.error("Erro ao salvar o perfil:", error);
+                alert("Não foi possível salvar as alterações.");
+            } finally {
+                saveButton.disabled = false;
+                saveButton.textContent = "Salvar Alterações";
+            }
+        }
+
+        function fetchUserPosts(user) {
+            const q = query(collection(db, "posts"), where("authorId", "==", user.uid), orderBy("timestamp", "desc"));
+            onSnapshot(q, (snapshot) => {
+                DOM.timelineContainer.innerHTML = '';
+                if (snapshot.empty) {
+                    DOM.timelineContainer.innerHTML = `<p class="text-center text-gray-500">Você ainda não fez nenhuma publicação.</p>`;
+                } else {
+                    snapshot.forEach(doc => {
+                        DOM.timelineContainer.appendChild(createTimelinePostElement(doc.id, doc.data()));
+                    });
+                }
+            });
+        }
+
+        function createTimelinePostElement(postId, post) {
+            const postDiv = document.createElement('div');
+            postDiv.className = 'bg-white p-4 rounded-lg shadow-md feed-post relative';
+            postDiv.innerHTML = `
+                <div class="absolute top-2 right-2 flex space-x-1">
+                    <button class="edit-post-btn p-2 rounded-full hover:bg-gray-100" data-post-id="${postId}" data-content="${post.content}"><svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg></button>
+                    <button class="delete-post-btn p-2 rounded-full hover:bg-gray-100" data-post-id="${postId}"><svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></button>
+                </div>
+                <div class="flex items-start space-x-4">
+                    <img src="${post.authorPhotoURL || `https://i.pravatar.cc/48?u=${post.authorId}`}" class="w-12 h-12 rounded-full" alt="Avatar">
+                    <div class="flex-1">
+                        <p class="font-bold">${post.authorDisplayName || 'Usuário'}</p>
+                        <p class="text-xs text-gray-400">${post.timestamp ? post.timestamp.toDate().toLocaleString('pt-BR') : ''}</p>
+                    </div>
+                </div>
+                <p class="mt-4 text-gray-700 break-words">${post.content}</p>
+                ${post.imageUrl ? `<div class="mt-4"><img src="${post.imageUrl}" class="rounded-lg w-full object-cover"></div>` : ''}
+            `;
+            return postDiv;
+        }
+
+        function handlePostActions(e) {
+            const editBtn = e.target.closest('.edit-post-btn');
+            if (editBtn) {
+                DOM.editPostModal.classList.remove('hidden');
+                DOM.editPostContent.value = editBtn.dataset.content;
+                DOM.editPostForm.dataset.postId = editBtn.dataset.postId;
+            }
+            const deleteBtn = e.target.closest('.delete-post-btn');
+            if (deleteBtn) {
+                DOM.deleteConfirmModal.classList.remove('hidden');
+                DOM.confirmDeleteBtn.dataset.postId = deleteBtn.dataset.postId;
+            }
+        }
+
+        async function handlePostEditSubmit(e) {
+            e.preventDefault();
+            const postId = e.target.dataset.postId;
+            const newContent = DOM.editPostContent.value;
+            await updateDoc(doc(db, "posts", postId), { content: newContent });
+            DOM.editPostModal.classList.add('hidden');
+        }
+        
+        async function handlePostDeleteConfirm(e) {
+            const postId = e.target.dataset.postId;
+            await deleteDoc(doc(db, "posts", postId));
+            DOM.deleteConfirmModal.classList.add('hidden');
+        }
+
+    </script>
+</body>
+</html>
