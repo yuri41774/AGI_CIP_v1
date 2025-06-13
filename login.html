@@ -3,83 +3,175 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Página de Login e Cadastro</title>
+    <title>Login e Cadastro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style> body { font-family: 'Inter', sans-serif; } </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style> 
+        body { font-family: 'Inter', sans-serif; } 
+        .form-section { 
+            transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out; 
+            width: 100%;
+        }
+        .form-hidden { 
+            opacity: 0; 
+            transform: scale(0.95);
+            position: absolute;
+            pointer-events: none;
+        }
+        .form-visible {
+            opacity: 1;
+            transform: scale(1);
+            position: relative;
+            pointer-events: auto;
+        }
+    </style>
 </head>
-<body class="bg-orange-500 flex items-center justify-center min-h-screen">
-    <div class="relative flex flex-col m-6 space-y-8 bg-white shadow-2xl rounded-2xl md:flex-row md:space-y-0">
+<body class="bg-orange-500 flex items-center justify-center min-h-screen p-4">
+    <div class="relative flex flex-col w-full max-w-4xl bg-white shadow-2xl rounded-2xl md:flex-row md:space-y-0">
         <!-- Coluna da Esquerda (Formulário) -->
-        <div class="flex flex-col justify-center p-8 md:p-14 overflow-hidden">
-            <div id="forms-container" class="relative">
-                <!-- Seção de Login -->
-                <div id="login-section" class="form-section">
-                    <h1 class="mb-3 text-4xl font-bold">Bem-vindo de volta</h1>
-                    <p class="font-light text-gray-400 mb-8">Que bom te ver novamente!</p>
-                    <form id="login-form">
-                        <div class="py-4"><label for="login-email" class="mb-2 text-md font-medium">Email</label><input type="email" id="login-email" required class="w-full p-2 border rounded-md"></div>
-                        <div class="py-4"><label for="login-password" class="mb-2 text-md font-medium">Senha</label><input type="password" id="login-password" required class="w-full p-2 border rounded-md"></div>
-                        <button type="submit" class="w-full bg-orange-500 text-white p-3 rounded-lg mt-4 hover:bg-orange-600 font-bold">Entrar</button>
+        <div class="flex flex-col justify-center p-8 md:p-14 min-w-[400px] md:min-w-[450px] overflow-hidden">
+            <div id="forms-container" class="relative h-auto">
+                
+                <!-- Secção de Login -->
+                <div id="login-section" class="form-section form-visible">
+                    <span class="mb-3 text-4xl font-bold">Bem-vindo</span>
+                    <span class="font-light text-gray-500 mb-8 block">Faça login para continuar.</span>
+                    
+                    <form id="login-form" class="space-y-4">
+                        <div>
+                            <label for="login-email" class="mb-2 text-md font-medium text-gray-700">Email</label>
+                            <input type="email" id="login-email" required class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500" placeholder="seuemail@exemplo.com">
+                        </div>
+                        <div>
+                            <label for="login-password" class="mb-2 text-md font-medium text-gray-700">Senha</label>
+                            <input type="password" id="login-password" required class="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500" placeholder="Sua senha">
+                        </div>
+                        <button type="submit" class="w-full bg-orange-500 text-white p-3 rounded-lg font-bold hover:bg-orange-600 transition-colors duration-300">Entrar</button>
                     </form>
-                    <div class="text-center mt-6"><p class="text-gray-500">Não tem uma conta? <a href="#" id="show-register-link" class="font-bold text-orange-600">Criar conta</a></p></div>
+                    
+                    <div class="text-center mt-6"><p class="text-gray-500">Não tem conta? <a href="#" id="show-register-link" class="font-bold text-orange-600 hover:underline">Crie uma aqui</a></p></div>
                 </div>
-                <!-- Seção de Cadastro -->
-                <div id="register-section" class="form-section opacity-0 absolute pointer-events-none">
-                    <h1 class="mb-3 text-4xl font-bold">Crie sua conta</h1>
-                    <p class="font-light text-gray-400 mb-4">É rápido e fácil. Vamos começar.</p>
-                    <form id="register-form">
-                        <div class="py-2"><label for="register-name" class="mb-2 text-md font-medium">Nome Completo</label><input type="text" id="register-name" required class="w-full p-2 border rounded-md"></div>
-                        <div class="py-2"><label for="register-email" class="mb-2 text-md font-medium">Email</label><input type="email" id="register-email" required class="w-full p-2 border rounded-md"></div>
-                        <div class="py-2"><label for="register-password" class="mb-2 text-md font-medium">Senha</label><input type="password" id="register-password" required class="w-full p-2 border rounded-md" placeholder="Mínimo 6 caracteres"></div>
-                        <button type="submit" class="w-full bg-green-600 text-white p-3 rounded-lg mt-6 hover:bg-green-700 font-bold">Criar Conta</button>
+                
+                <!-- Secção de Cadastro -->
+                <div id="register-section" class="form-section form-hidden">
+                    <span class="mb-3 text-4xl font-bold">Criar Conta</span>
+                    <span class="font-light text-gray-500 mb-4 block">É rápido e fácil.</span>
+                    <form id="register-form" class="space-y-4">
+                        <div><label for="register-name" class="mb-2 text-md font-medium text-gray-700">Nome Completo</label><input type="text" id="register-name" required class="w-full p-2 border border-gray-300 rounded-md"></div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div><label for="register-birthdate" class="mb-2 text-md font-medium text-gray-700">Nascimento</label><input type="date" id="register-birthdate" required class="w-full p-2 border border-gray-300 rounded-md"></div>
+                             <div><label for="register-phone" class="mb-2 text-md font-medium text-gray-700">Celular</label><input type="tel" id="register-phone" required class="w-full p-2 border border-gray-300 rounded-md"></div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div><label for="register-gender" class="mb-2 text-md font-medium text-gray-700">Gênero</label><select id="register-gender" required class="w-full p-2 border border-gray-300 rounded-md bg-white"><option value="">Selecione...</option><option value="masculino">Masculino</option><option value="feminino">Feminino</option><option value="outro">Outro</option></select></div>
+                            <div><label for="register-marital-status" class="mb-2 text-md font-medium text-gray-700">Estado Civil</label><select id="register-marital-status" required class="w-full p-2 border border-gray-300 rounded-md bg-white"><option value="">Selecione...</option><option value="solteiro">Solteiro(a)</option><option value="casado">Casado(a)</option><option value="divorciado">Divorciado(a)</option><option value="viuvo">Viúvo(a)</option></select></div>
+                        </div>
+                        <div><label for="register-email" class="mb-2 text-md font-medium text-gray-700">Email</label><input type="email" id="register-email" required class="w-full p-2 border border-gray-300 rounded-md"></div>
+                        <div><label for="register-password" class="mb-2 text-md font-medium text-gray-700">Senha</label><input type="password" id="register-password" required class="w-full p-2 border border-gray-300 rounded-md" placeholder="Mínimo 6 caracteres"></div>
+                        <div><label for="register-password-confirm" class="mb-2 text-md font-medium text-gray-700">Confirmar Senha</label><input type="password" id="register-password-confirm" required class="w-full p-2 border border-gray-300 rounded-md"></div>
+                        <button type="submit" class="w-full bg-green-600 text-white p-3 rounded-lg font-bold hover:bg-green-700 transition-colors duration-300">Criar Conta</button>
                     </form>
-                    <div class="text-center mt-6"><p class="text-gray-500">Já tem uma conta? <a href="#" id="show-login-link" class="font-bold text-orange-600">Entrar</a></p></div>
+                    <div class="text-center mt-6"><p class="text-gray-500">Já tem uma conta? <a href="#" id="show-login-link" class="font-bold text-orange-600 hover:underline">Entrar</a></p></div>
                 </div>
             </div>
         </div>
-        <!-- Coluna da Direita (Texto) -->
-        <div class="relative hidden md:flex items-center justify-center bg-gray-800 rounded-r-2xl text-white text-center p-8">
-            <div><h2 class="text-4xl font-extrabold">Comunidade<br>Internacional<br>Plenitude</h2></div>
+        
+        <!-- Coluna da Direita (Imagem) -->
+        <div class="relative hidden md:flex items-center justify-center bg-gray-800 rounded-r-2xl p-8">
+            <h2 class="text-4xl font-extrabold text-white text-center">Comunidade<br>Internacional<br>Plenitude</h2>
         </div>
     </div>
+
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-app.js";
-        import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.9.1/firebase-firestore.js";
-        const firebaseConfig = { apiKey: "AIzaSyBKFZ8Zp0e9V6pH_hM-UIITTlIEomlTDLQ", authDomain: "agi-v1-e4000.firebaseapp.com", projectId: "agi-v1-e4000", storageBucket: "agi-v1-e4000.appspot.com", messagingSenderId: "908312431193", appId: "1:908312431193:web:50c5aac95753327365bf48" };
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const db = getFirestore(app);
-        
-        const loginSection = document.getElementById('login-section');
-        const registerSection = document.getElementById('register-section');
-        
-        document.getElementById('show-register-link').addEventListener('click', (e) => { e.preventDefault(); loginSection.classList.add('opacity-0', 'pointer-events-none'); registerSection.classList.remove('opacity-0', 'pointer-events-none'); });
-        document.getElementById('show-login-link').addEventListener('click', (e) => { e.preventDefault(); registerSection.classList.add('opacity-0', 'pointer-events-none'); loginSection.classList.remove('opacity-0', 'pointer-events-none'); });
-        
-        document.getElementById('login-form').addEventListener('submit', (e) => { e.preventDefault(); signInWithEmailAndPassword(auth, e.target['login-email'].value, e.target['login-password'].value).catch(err => alert(err.message)); });
-        
-        document.getElementById('register-form').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const name = e.target['register-name'].value;
-            const email = e.target['register-email'].value;
-            const password = e.target['register-password'].value;
-            try {
-                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-                await setDoc(doc(db, "users", userCredential.user.uid), {
-                    uid: userCredential.user.uid,
-                    displayName: name,
-                    email: email,
-                    photoURL: null,
-                    bio: `Olá! Eu sou ${name}.`,
-                    status: 'online',
-                    friends: [],
+        document.addEventListener('DOMContentLoaded', () => {
+            const supabaseUrl = 'https://bilhtpgelctnybjemzeg.supabase.co';
+            const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJpbGh0cGdlbGN0bnliamVtemVnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgyNzgzOTYsImV4cCI6MjA2Mzg1NDM5Nn0.yybV4HP0d9KAJGxMq7y8N_AHKgqPHNXoqu0oH_Waoh4';
+            const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+            const loginSection = document.getElementById('login-section');
+            const registerSection = document.getElementById('register-section');
+            
+            function toggleForms(showRegister) {
+                if(showRegister) {
+                    loginSection.classList.remove('form-visible');
+                    loginSection.classList.add('form-hidden');
+                    registerSection.classList.remove('form-hidden');
+                    registerSection.classList.add('form-visible');
+                } else {
+                    registerSection.classList.remove('form-visible');
+                    registerSection.classList.add('form-hidden');
+                    loginSection.classList.remove('form-hidden');
+                    loginSection.classList.add('form-visible');
+                }
+            }
+
+            document.getElementById('show-register-link').addEventListener('click', (e) => {
+                e.preventDefault();
+                toggleForms(true);
+            });
+
+            document.getElementById('show-login-link').addEventListener('click', (e) => {
+                e.preventDefault();
+                toggleForms(false);
+            });
+            
+            document.getElementById('login-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const email = e.target['login-email'].value;
+                const password = e.target['login-password'].value;
+                const { error } = await supabase.auth.signInWithPassword({ email, password });
+                if (error) alert("Erro no login: " + error.message);
+            });
+            
+            document.getElementById('register-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const password = document.getElementById('register-password').value;
+                const passwordConfirm = document.getElementById('register-password-confirm').value;
+
+                if (password !== passwordConfirm) {
+                    alert("As senhas não coincidem.");
+                    return;
+                }
+                
+                const { data, error } = await supabase.auth.signUp({
+                    email: document.getElementById('register-email').value,
+                    password: password,
+                    options: {
+                        data: { 
+                            display_name: document.getElementById('register-name').value,
+                            birthdate: document.getElementById('register-birthdate').value,
+                            phone: document.getElementById('register-phone').value,
+                            gender: document.getElementById('register-gender').value,
+                            marital_status: document.getElementById('register-marital-status').value,
+                        }
+                    }
                 });
-            } catch (error) { alert(error.message); }
+
+                if (error) {
+                    alert("Erro ao criar conta: " + error.message);
+                } else {
+                    alert("Registo bem-sucedido! Verifique o seu email para confirmar a sua conta antes de fazer login.");
+                    toggleForms(false);
+                }
+            });
+            
+            supabase.auth.onAuthStateChange((event, session) => {
+                if (event === 'SIGNED_IN') {
+                    window.location.href = './dashboard.html';
+                }
+            });
+
+            async function checkInitialSession() {
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session) {
+                    window.location.href = './dashboard.html';
+                }
+            }
+            
+            checkInitialSession();
         });
-        
-        onAuthStateChanged(auth, user => { if (user) window.location.href = './dashboard.html'; });
     </script>
 </body>
 </html>
