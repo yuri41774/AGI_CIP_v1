@@ -4,7 +4,22 @@
 
 // Importa a função createClient a partir do objeto global 'supabase' fornecido pelo script CDN.
 // Importa o cliente Supabase e as funções de autenticação e modais personalizadas
-import { supabaseClient, checkAuthAndGetProfile, currentUser, showCustomAlert, showCustomConfirm } from './auth.js';
+import { SUPABASE_URL, SUPABASE_ANON_KEY, supabaseClient, setSupabaseClient, checkAuthAndGetProfile, currentUser, showCustomAlert, showCustomConfirm } from './auth.js';
+
+// Inicializa o SupabaseClient globalmente uma vez que o DOM esteja carregado
+// e o objeto 'supabase' do CDN esteja disponível.
+document.addEventListener('DOMContentLoaded', () => {
+    if (typeof supabase !== 'undefined' && supabase.createClient) {
+        const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        setSupabaseClient(client); // Define a instância do cliente em auth.js
+        console.log("SupabaseClient inicializado e listener de autenticação configurado.");
+    } else {
+        console.error("Supabase CDN não carregado a tempo. Funções de Supabase podem não funcionar.");
+        // Em um cenário real, você pode querer exibir uma mensagem de erro ao utilizador
+        // ou tentar recarregar a página.
+    }
+});
+
 
 //-------------------------------------------------------------------
 // 2. LÓGICA ESPECÍFICA PARA CADA PÁGINA
@@ -12,29 +27,8 @@ import { supabaseClient, checkAuthAndGetProfile, currentUser, showCustomAlert, s
 
 // --- LÓGICA DA PÁGINA DE LOGIN (/login.html) ---
 function initLoginPage() {
-    // Verifica se já existe uma sessão ativa ao carregar a página
-    // Esta verificação é crucial para evitar que utilizadores autenticados vejam a tela de login.
-    supabaseClient.auth.getSession().then(({ data: { session } }) => {
-        if (session) {
-            console.log("Sessão existente, redirecionando para o dashboard.");
-            window.location.href = '/dashboard.html';
-        } else {
-            console.log("Nenhuma sessão ativa, exibindo tela de login/registo.");
-            // Garante que a seção de login está visível por padrão se não houver sessão
-            document.getElementById('login-section')?.classList.add('form-visible');
-            document.getElementById('login-section')?.classList.remove('form-hidden');
-            document.getElementById('register-section')?.classList.add('form-hidden');
-            document.getElementById('register-section')?.classList.remove('form-visible');
-        }
-    }).catch(error => {
-        console.error("Erro ao verificar sessão inicial:", error);
-        // Em caso de erro na verificação da sessão, ainda assim exibe a tela de login
-        document.getElementById('login-section')?.classList.add('form-visible');
-        document.getElementById('login-section')?.classList.remove('form-hidden');
-        document.getElementById('register-section')?.classList.add('form-hidden');
-        document.getElementById('register-section')?.classList.remove('form-visible');
-    });
-
+    // A verificação inicial de sessão para redirecionamento é feita no index.html.
+    // Aqui, apenas configuramos os formulários e listeners.
 
     const loginSection = document.getElementById('login-section');
     const registerSection = document.getElementById('register-section');
@@ -42,8 +36,8 @@ function initLoginPage() {
     const showLoginLink = document.getElementById('show-login-link');
     const loginForm = document.getElementById('login-form');
     const registerForm = document.getElementById('register-form');
-    const loginButton = document.getElementById('login-button'); // Adicionado ID ao botão de login no HTML
-    const registerButton = document.getElementById('register-button'); // Adicionado ID ao botão de registo no HTML
+    const loginButton = document.getElementById('login-button');
+    const registerButton = document.getElementById('register-button');
 
     function toggleForms(showRegister) {
         if (showRegister) {
@@ -67,9 +61,13 @@ function initLoginPage() {
         const email = e.target['login-email'].value;
         const password = e.target['login-password'].value;
 
-        if (loginButton) loginButton.disabled = true; // Desabilita o botão
-        // Adicionar um spinner ao botão de login (se houver um elemento para isso no HTML)
-        // Exemplo: loginButton.innerHTML = '<span class="loader"></span> A carregar...';
+        if (!supabaseClient) {
+            showCustomAlert("Erro de Inicialização", "O serviço de autenticação não está pronto. Tente novamente mais tarde.");
+            return;
+        }
+
+        if (loginButton) loginButton.disabled = true;
+        // Adicionar um spinner ao botão de login
 
         try {
             const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
@@ -84,7 +82,7 @@ function initLoginPage() {
             console.error("Erro inesperado durante o login:", err);
             showCustomAlert("Erro Inesperado", "Ocorreu um erro inesperado durante o login. Tente novamente.");
         } finally {
-            if (loginButton) loginButton.disabled = false; // Habilita o botão
+            if (loginButton) loginButton.disabled = false;
             // Remover spinner
         }
     });
@@ -104,7 +102,12 @@ function initLoginPage() {
         if (password.length < 6) { showCustomAlert("Erro de Registo", "A palavra-passe deve ter no mínimo 6 caracteres."); return; }
         if (password !== passwordConfirm) { showCustomAlert("Erro de Registo", "As palavras-passe não coincidem."); return; }
 
-        if (registerButton) registerButton.disabled = true; // Desabilita o botão
+        if (!supabaseClient) {
+            showCustomAlert("Erro de Inicialização", "O serviço de autenticação não está pronto. Tente novamente mais tarde.");
+            return;
+        }
+
+        if (registerButton) registerButton.disabled = true;
         // Adicionar um spinner ao botão de registo
 
         try {
@@ -130,11 +133,9 @@ function initLoginPage() {
                 console.log("Registo bem-sucedido para o utilizador:", data.user.id);
                 showCustomAlert("Registo Bem-Sucedido!", "Verifique o seu e-mail para confirmar a sua conta.", () => {
                     toggleForms(false); // Volta para o formulário de login
-                    // Limpa os campos do formulário de registo
                     registerForm.reset();
                 });
             } else {
-                // Caso o signUp não retorne um utilizador mas também não tenha erro (situação rara)
                 console.warn("SignUp concluído sem erro, mas nenhum utilizador retornado.");
                 showCustomAlert("Registo Concluído", "A sua conta foi criada. Verifique o seu e-mail para confirmar.", () => {
                     toggleForms(false);
@@ -145,7 +146,7 @@ function initLoginPage() {
             console.error("Erro inesperado durante o registo:", err);
             showCustomAlert("Erro Inesperado", "Ocorreu um erro inesperado durante o registo. Tente novamente.");
         } finally {
-            if (registerButton) registerButton.disabled = false; // Habilita o botão
+            if (registerButton) registerButton.disabled = false;
             // Remover spinner
         }
     });
@@ -154,12 +155,15 @@ function initLoginPage() {
 
 // --- LÓGICA DA PÁGINA DO DASHBOARD (/dashboard.html) ---
 async function initDashboardPage() {
-    // A função checkAuthAndGetProfile é chamada aqui e atualiza o currentUser global
-    // Se o utilizador não estiver autenticado ou autorizado, ele será redirecionado por checkAuthAndGetProfile
+    if (!supabaseClient) {
+        showCustomAlert("Erro de Inicialização", "O serviço não está pronto. Redirecionando para o login.", () => {
+            window.location.href = '/login.html';
+        });
+        return;
+    }
     await checkAuthAndGetProfile();
-    if (!currentUser) return; // Se o redirecionamento ocorreu, esta linha evita a execução do restante da função
+    if (!currentUser) return;
 
-    // Elementos do DOM do Dashboard
     const userAvatar = document.getElementById('user-avatar');
     const userEmailDisplay = document.getElementById('user-email-display');
     const adminLink = document.getElementById('admin-link');
@@ -173,14 +177,12 @@ async function initDashboardPage() {
     const postSubmitBtn = document.getElementById('post-submit-btn');
     const feedContainer = document.getElementById('feed-container');
 
-    // Setup do Perfil no Header
     if(userAvatar) userAvatar.src = currentUser.photo_url || `https://placehold.co/40x40/FF7F50/FFFFFF?text=${currentUser.display_name ? currentUser.display_name.charAt(0) : 'U'}`;
     if(userEmailDisplay) userEmailDisplay.textContent = currentUser.email;
     if (adminLink && (currentUser.role === 'admin' || currentUser.role === 'admin_geral')) {
         adminLink.classList.remove('hidden');
     }
 
-    // Listeners do Header
     if(logoutBtn) logoutBtn.addEventListener('click', async () => {
         try {
             await supabaseClient.from('profiles').update({ status: 'offline' }).eq('id', currentUser.id);
@@ -196,7 +198,6 @@ async function initDashboardPage() {
         if(profileMenu) profileMenu.classList.toggle('hidden');
     });
 
-    // Lógica de Postagem
     if(createPostForm) createPostForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const content = postContent.value.trim();
@@ -209,7 +210,6 @@ async function initDashboardPage() {
         }
 
         postSubmitBtn.disabled = true;
-        // Adicionar um spinner ao botão de publicação
 
         try {
             const { error } = await supabaseClient.from('posts').insert({
@@ -233,11 +233,9 @@ async function initDashboardPage() {
             showCustomAlert("Erro Inesperado", "Ocorreu um erro inesperado ao criar a publicação. Tente novamente.");
         } finally {
             postSubmitBtn.disabled = false;
-            // Remover spinner
         }
     });
 
-    // Lógica do Feed
     const fetchAndRenderFeed = async () => {
         try {
             const { data, error } = await supabaseClient.from('posts')
@@ -261,7 +259,6 @@ async function initDashboardPage() {
                         const authorAvatar = post.profiles.photo_url || `https://placehold.co/40x40/FF7F50/FFFFFF?text=${post.profiles.display_name ? post.profiles.display_name.charAt(0) : 'U'}`;
                         const postDate = new Date(post.created_at).toLocaleString('pt-BR');
 
-                        // Renderiza categorias e hashtags
                         const categoriesHtml = post.categories && post.categories.length > 0
                             ? post.categories.map(cat => `<span class="bg-gray-200 text-gray-700 text-xs px-2 py-1 rounded-full mr-1">${cat}</span>`).join('')
                             : '';
@@ -306,7 +303,6 @@ async function initDashboardPage() {
         }
     };
 
-    // Adiciona listeners para curtidas, comentários e compartilhamentos (delegados)
     if(feedContainer) {
         feedContainer.addEventListener('click', async (e) => {
             const likeBtn = e.target.closest('.like-btn');
@@ -345,17 +341,14 @@ async function initDashboardPage() {
         });
     }
 
-    // Carregar feed inicial e ouvir por mudanças
     fetchAndRenderFeed();
     supabaseClient.channel('public:posts')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'posts' }, fetchAndRenderFeed)
         .subscribe();
 
-    // Atualiza status do utilizador para online ao carregar o dashboard
-    // Nota: O lifecycleScope.launch é para Kotlin/Android. Em JavaScript, use apenas async/await ou .then()
     (async () => {
         try {
-            if (currentUser && currentUser.id) { // Verifica se currentUser e id existem
+            if (currentUser && currentUser.id) {
                 await supabaseClient.from('profiles').update({ status: 'online' }).eq('id', currentUser.id);
                 console.log("Status do utilizador atualizado para online.");
             }
@@ -367,7 +360,13 @@ async function initDashboardPage() {
 
 // --- LÓGICA DA PÁGINA DE PERFIL (/profile.html) ---
 async function initProfilePage() {
-    await checkAuthAndGetProfile(); // Atualiza o currentUser global
+    if (!supabaseClient) {
+        showCustomAlert("Erro de Inicialização", "O serviço não está pronto. Redirecionando para o login.", () => {
+            window.location.href = '/login.html';
+        });
+        return;
+    }
+    await checkAuthAndGetProfile();
     if (!currentUser) return;
 
     const profileView = document.getElementById('profile-view');
@@ -422,7 +421,7 @@ async function initProfilePage() {
     if(profileForm) profileForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const updates = {
-            id: currentUser.id, updated_at: new Date().toISOString(), // Use ISO string for consistency
+            id: currentUser.id, updated_at: new Date().toISOString(),
             display_name: formElements.name.value, bio: formElements.bio.value, phone: formElements.phone.value,
             birthdate: formElements.birthdate.value, gender: formElements.gender.value, marital_status: formElements.maritalStatus.value,
         };
@@ -434,7 +433,6 @@ async function initProfilePage() {
             }
             else {
                 showCustomAlert('Sucesso!', 'Perfil atualizado!', () => {
-                    // Atualiza o currentUser global após a atualização
                     checkAuthAndGetProfile().then(() => {
                         updateProfileDisplay(currentUser);
                         profileForm.classList.add('hidden');
@@ -451,7 +449,13 @@ async function initProfilePage() {
 
 // --- LÓGICA DA PÁGINA DE EVENTOS (/eventos.html) ---
 async function initEventsPage() {
-    await checkAuthAndGetProfile(); // Atualiza o currentUser global
+    if (!supabaseClient) {
+        showCustomAlert("Erro de Inicialização", "O serviço não está pronto. Redirecionando para o login.", () => {
+            window.location.href = '/login.html';
+        });
+        return;
+    }
+    await checkAuthAndGetProfile();
     if (!currentUser) return;
 
     const eventsContainer = document.getElementById('events-container');
@@ -463,7 +467,7 @@ async function initEventsPage() {
 
     const fetchAndRenderEvents = async () => {
         try {
-            const { data, error } = await supabaseClient.from('events').select(`*, profiles(display_name)`).order('datetime', { ascending: true }); // Order by datetime
+            const { data, error } = await supabaseClient.from('events').select(`*, profiles(display_name)`).order('datetime', { ascending: true });
             if(eventsContainer) eventsContainer.innerHTML = '';
             if (error || !data || data.length === 0) {
                 if(eventsContainer) eventsContainer.innerHTML = `<p class="text-gray-500 col-span-full text-center">Nenhum evento agendado.</p>`;
@@ -506,8 +510,8 @@ async function initEventsPage() {
         e.preventDefault();
         const eventId = document.getElementById('event-id').value;
         const eventData = {
-            title: document.getElementById('event-name').value, // Alterado de 'name' para 'title'
-            datetime: `${document.getElementById('event-date').value}T${document.getElementById('event-time').value}:00Z`, // Combina data e hora para datetime-local e adiciona 'Z' para UTC
+            title: document.getElementById('event-name').value,
+            datetime: `${document.getElementById('event-date').value}T${document.getElementById('event-time').value}:00Z`,
             location: document.getElementById('event-location').value,
             description: document.getElementById('event-description').value,
             created_by: currentUser.id,
@@ -535,8 +539,7 @@ async function initEventsPage() {
                 const { data } = await supabaseClient.from('events').select('*').eq('id', editBtn.dataset.id).single();
                 if (data) {
                     document.getElementById('event-id').value = data.id;
-                    document.getElementById('event-name').value = data.title; // Alterado de 'name' para 'title'
-                    // Separa datetime para campos de data e hora
+                    document.getElementById('event-name').value = data.title;
                     const eventDateTime = new Date(data.datetime);
                     document.getElementById('event-date').value = eventDateTime.toISOString().split('T')[0];
                     document.getElementById('event-time').value = eventDateTime.toISOString().split('T')[1].substring(0, 5);
@@ -557,7 +560,7 @@ async function initEventsPage() {
                 try {
                     const eventId = deleteBtn.dataset.id;
                     await supabaseClient.from('events').delete().eq('id', eventId);
-                    fetchAndRenderEvents(); // Atualiza a lista após exclusão
+                    fetchAndRenderEvents();
                     showCustomAlert("Sucesso!", "Evento excluído com sucesso!");
                 } catch (err) {
                     console.error("Erro ao excluir evento:", err.message);
@@ -574,7 +577,13 @@ async function initEventsPage() {
 
 // --- LÓGICA DA PÁGINA DE ADMIN (/admin.html) ---
 async function initAdminPage() {
-    await checkAuthAndGetProfile(true); // Verifica se é admin
+    if (!supabaseClient) {
+        showCustomAlert("Erro de Inicialização", "O serviço não está pronto. Redirecionando para o login.", () => {
+            window.location.href = '/login.html';
+        });
+        return;
+    }
+    await checkAuthAndGetProfile(true);
     if (!currentUser) return;
 
     const metricsDOMElements = {
@@ -589,10 +598,9 @@ async function initAdminPage() {
     const createEventBtn = document.getElementById('create-event-btn');
     const cancelBtn = document.getElementById('cancel-btn');
 
-    // Mapeamento dos campos do formulário de evento no admin
     const eventFormFields = {
         id: document.getElementById('event-id'),
-        name: document.getElementById('event-name'), // Este é o 'title' na tabela events
+        name: document.getElementById('event-name'),
         date: document.getElementById('event-date'),
         time: document.getElementById('event-time'),
         location: document.getElementById('event-location'),
@@ -615,7 +623,7 @@ async function initAdminPage() {
         }
     };
 
-    let allUsers = []; // Para armazenar os utilizadores e verificar roles
+    let allUsers = [];
     const fetchUsers = async () => {
         try {
             const { data: users, error } = await supabaseClient.from('profiles').select('*').order('created_at', { ascending: false });
@@ -624,7 +632,7 @@ async function initAdminPage() {
                 showCustomAlert("Erro de Utilizadores", "Não foi possível carregar a lista de utilizadores.");
                 return;
             }
-            allUsers = users; // Armazena os utilizadores
+            allUsers = users;
             if (!usersTableBody) return;
             usersTableBody.innerHTML = '';
             users.forEach(user => {
@@ -632,7 +640,6 @@ async function initAdminPage() {
                 const isAdmin = user.role === 'admin' || user.role === 'admin_geral';
                 const isGeneralAdmin = user.role === 'admin_geral';
 
-                // Desabilita o botão se o utilizador for o próprio admin_geral ou se tentar alterar outro admin_geral
                 const disableButton = (currentUser.id === user.id) || (currentUser.role !== 'admin_geral' && isGeneralAdmin);
 
                 row.innerHTML = `
@@ -656,7 +663,7 @@ async function initAdminPage() {
 
     const fetchEvents = async () => {
         try {
-            const { data, error } = await supabaseClient.from('events').select('*').order('datetime', { ascending: true }); // Order by datetime
+            const { data, error } = await supabaseClient.from('events').select('*').order('datetime', { ascending: true });
             if (!eventsContainer) return;
             eventsContainer.innerHTML = '';
             if (error || !data || data.length === 0) { eventsContainer.innerHTML = '<p class="col-span-full text-center text-gray-500">Nenhum evento.</p>'; return; }
@@ -678,7 +685,6 @@ async function initAdminPage() {
         const { action, id } = e.target.dataset;
         if (!action || !id) return;
 
-        // Prevenção de auto-alteração e alteração de admin_geral por admin comum
         const targetUser = allUsers.find(u => u.id === id);
         if (!targetUser) {
             showCustomAlert("Erro", "Utilizador não encontrado.");
@@ -704,7 +710,7 @@ async function initAdminPage() {
                 }
                 else {
                     showCustomAlert("Sucesso!", "Role do utilizador atualizada!");
-                    fetchUsers(); // Re-renderiza a lista de utilizadores
+                    fetchUsers();
                 }
             } catch (err) {
                 console.error("Erro inesperado ao alterar role:", err);
@@ -715,7 +721,7 @@ async function initAdminPage() {
 
     if(createEventBtn) createEventBtn.onclick = () => {
         if(eventForm) eventForm.reset();
-        eventFormFields.id.value = ''; // Limpa o ID para um novo evento
+        eventFormFields.id.value = '';
         if(eventModalTitle) eventModalTitle.textContent = 'Novo Evento';
         if(eventModal) eventModal.classList.remove('hidden');
     };
@@ -725,8 +731,8 @@ async function initAdminPage() {
         e.preventDefault();
         const eventId = eventFormFields.id.value;
         const eventData = {
-            title: eventFormFields.name.value, // Mapeia 'name' do formulário para 'title' da tabela
-            datetime: `${eventFormFields.date.value}T${eventFormFields.time.value}:00Z`, // Combina e formata
+            title: eventFormFields.name.value,
+            datetime: `${eventFormFields.date.value}T${eventFormFields.time.value}:00Z`,
             location: eventFormFields.location.value,
             description: eventFormFields.description.value,
             created_by: currentUser.id,
@@ -760,9 +766,8 @@ async function initAdminPage() {
             try {
                 const { data } = await supabaseClient.from('events').select('*').eq('id', id).single();
                 if(data) {
-                    // Preenchimento seguro do formulário
                     eventFormFields.id.value = data.id;
-                    eventFormFields.name.value = data.title; // Mapeia 'title' da tabela para 'name' do formulário
+                    eventFormFields.name.value = data.title;
                     const eventDateTime = new Date(data.datetime);
                     eventFormFields.date.value = eventDateTime.toISOString().split('T')[0];
                     eventFormFields.time.value = eventDateTime.toISOString().split('T')[1].substring(0, 5);
@@ -796,7 +801,6 @@ async function initAdminPage() {
     };
 
     loadAndListen();
-    // Realtime listeners para atualizar a página dinamicamente
     supabaseClient.channel('admin-realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => {
           fetchMetrics();
@@ -812,6 +816,12 @@ async function initAdminPage() {
 
 // --- LÓGICA DA PÁGINA DE ESTUDOS BÍBLICOS (/estudos.html) ---
 async function initEstudosPage() {
+    if (!supabaseClient) {
+        showCustomAlert("Erro de Inicialização", "O serviço não está pronto. Redirecionando para o login.", () => {
+            window.location.href = '/login.html';
+        });
+        return;
+    }
     await checkAuthAndGetProfile();
     if (!currentUser) return;
 
@@ -824,7 +834,7 @@ async function initEstudosPage() {
 
     const fetchAndRenderEstudos = async () => {
         try {
-            const { data, error } = await supabaseClient.from('studies').select(`*, profiles(display_name)`).order('created_at', { ascending: false }); // Alterado de 'data_publicacao' para 'created_at'
+            const { data, error } = await supabaseClient.from('studies').select(`*, profiles(display_name)`).order('created_at', { ascending: false });
             if(estudosContainer) estudosContainer.innerHTML = '';
             if (error || !data || data.length === 0) {
                 if(estudosContainer) estudosContainer.innerHTML = `<p class="text-gray-500 col-span-full text-center">Nenhum estudo bíblico encontrado.</p>`;
@@ -841,11 +851,11 @@ async function initEstudosPage() {
                     </div>` : '';
 
                 let contentHtml = '';
-                if (estudo.type === 'video' && estudo.youtube_url) { // Alterado de 'tipo_estudo' para 'type'
+                if (estudo.type === 'video' && estudo.youtube_url) {
                     const videoId = estudo.youtube_url.split('v=')[1] || estudo.youtube_url.split('youtu.be/')[1];
                     contentHtml = `<div class="aspect-video w-full"><iframe src="https://www.youtube.com/embed/${videoId}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen class="w-full h-full rounded-md"></iframe></div>`;
-                } else if (estudo.type === 'text' && estudo.text_content) { // Alterado de 'tipo_estudo' para 'type' e 'conteudo_texto' para 'text_content'
-                    contentHtml = `<p class="text-gray-600 mt-4 whitespace-pre-wrap">${estudo.text_content.substring(0, 200)}...</p>`; // Prévia do texto
+                } else if (estudo.type === 'text' && estudo.text_content) {
+                    contentHtml = `<p class="text-gray-600 mt-4 whitespace-pre-wrap">${estudo.text_content.substring(0, 200)}...</p>`;
                 }
 
                 card.innerHTML = `${authorControls}
@@ -878,9 +888,9 @@ async function initEstudosPage() {
         const estudoId = document.getElementById('estudo-id').value;
         const estudoData = {
             title: document.getElementById('estudo-titulo').value,
-            type: document.getElementById('estudo-tipo').value, // Alterado de 'tipo_estudo' para 'type'
-            youtube_url: document.getElementById('estudo-link-video').value, // Alterado de 'link_video_youtube' para 'youtube_url'
-            text_content: document.getElementById('estudo-conteudo-texto').value, // Alterado de 'conteudo_texto' para 'text_content'
+            type: document.getElementById('estudo-tipo').value,
+            youtube_url: document.getElementById('estudo-link-video').value,
+            text_content: document.getElementById('estudo-conteudo-texto').value,
             created_at: new Date().toISOString(),
             created_by: currentUser.id,
         };
@@ -919,7 +929,6 @@ async function initEstudosPage() {
                     document.getElementById('estudo-link-video').value = data.youtube_url || '';
                     document.getElementById('estudo-conteudo-texto').value = data.text_content || '';
 
-                    // Dispara o evento de mudança para atualizar a visibilidade dos campos
                     document.getElementById('estudo-tipo')?.dispatchEvent(new Event('change'));
 
                     if(modalTitle) modalTitle.textContent = "Editar Estudo";
@@ -951,6 +960,12 @@ async function initEstudosPage() {
 
 // --- LÓGICA DA PÁGINA DE DETALHE DE ESTUDO BÍBLICO (/estudo_detalhe.html) ---
 async function initEstudoDetalhePage() {
+    if (!supabaseClient) {
+        showCustomAlert("Erro de Inicialização", "O serviço não está pronto. Redirecionando para o login.", () => {
+            window.location.href = '/login.html';
+        });
+        return;
+    }
     await checkAuthAndGetProfile();
     if (!currentUser) return;
 
@@ -989,16 +1004,15 @@ async function initEstudoDetalhePage() {
                     const videoId = estudo.youtube_url.split('v=')[1] || estudo.youtube_url.split('youtu.be/')[1];
                     contentHtml += `<div class="aspect-video w-full mb-6"><iframe src="https://www.youtube.com/embed/${videoId}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen class="w-full h-full rounded-md"></iframe></div>`;
                 } else if (estudo.type === 'text' && estudo.text_content) {
-                    contentHtml += `<div class="prose max-w-none text-gray-700">${estudo.text_content.replace(/\n/g, '<br>')}</div>`; // Renderiza quebras de linha
+                    contentHtml += `<div class="prose max-w-none text-gray-700">${estudo.text_content.replace(/\n/g, '<br>')}</div>`;
                 }
                 estudoContentDiv.innerHTML = contentHtml;
             }
 
-            // Fetch e renderiza comentários do fórum
             const { data: mensagens, error: mensagensError } = await supabaseClient.from('forum_messages')
                 .select(`*, profiles(display_name, photo_url)`)
-                .eq('topic_id', estudoId) // Assumindo que o estudo_id é também o topic_id para o fórum principal
-                .order('created_at', { ascending: true }); // Alterado de 'data_mensagem' para 'created_at'
+                .eq('topic_id', estudoId)
+                .order('created_at', { ascending: true });
 
             if (mensagensError) {
                 console.error('Erro ao buscar mensagens do fórum:', mensagensError);
@@ -1046,7 +1060,7 @@ async function initEstudoDetalhePage() {
 
             try {
                 const { error } = await supabaseClient.from('forum_messages').insert({
-                    topic_id: estudoId, // O id do estudo é o id do tópico para este fórum
+                    topic_id: estudoId,
                     author_id: currentUser.id,
                     content: content,
                     created_at: new Date().toISOString()
@@ -1058,7 +1072,7 @@ async function initEstudoDetalhePage() {
                 }
                 else {
                     forumPostContent.value = '';
-                    fetchAndRenderEstudo(); // Recarrega o estudo para ver a nova mensagem
+                    fetchAndRenderEstudo();
                 }
             } catch (err) {
                 console.error("Erro inesperado ao enviar mensagem do fórum:", err);
@@ -1077,6 +1091,12 @@ async function initEstudoDetalhePage() {
 
 // --- LÓGICA DA PÁGINA DE LIVES (/lives.html) ---
 async function initLivesPage() {
+    if (!supabaseClient) {
+        showCustomAlert("Erro de Inicialização", "O serviço não está pronto. Redirecionando para o login.", () => {
+            window.location.href = '/login.html';
+        });
+        return;
+    }
     await checkAuthAndGetProfile();
     if (!currentUser) return;
 
@@ -1100,7 +1120,7 @@ async function initLivesPage() {
                 card.className = 'bg-white p-6 rounded-lg shadow-md flex flex-col relative';
                 const isAuthorOrAdmin = currentUser && (live.created_by === currentUser.id || currentUser.role === 'admin' || currentUser.role === 'admin_geral');
                 const liveDateTime = new Date(live.start_datetime);
-                const isLiveNow = live.is_live_now && (new Date() >= liveDateTime); // Verifica se está ao vivo e se a data já passou
+                const isLiveNow = live.is_live_now && (new Date() >= liveDateTime);
 
                 const authorControls = isAuthorOrAdmin ? `
                     <div class="absolute top-2 right-2 flex space-x-1">
@@ -1119,7 +1139,7 @@ async function initLivesPage() {
                 const videoLink = isLiveNow ? live.youtube_live_url : live.recording_url;
                 if (videoLink) {
                     const videoId = videoLink.split('v=')[1] || videoLink.split('youtu.be/')[1];
-                    if (videoId) { // Garante que o ID do vídeo foi extraído
+                    if (videoId) {
                         videoHtml = `<div class="aspect-video w-full mb-4"><iframe src="https://www.youtube.com/embed/${videoId}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen class="w-full h-full rounded-md"></iframe></div>`;
                     } else {
                         videoHtml = `<div class="bg-gray-200 aspect-video w-full mb-4 rounded-md flex items-center justify-center text-gray-500">Link de vídeo inválido.</div>`;
@@ -1199,7 +1219,7 @@ async function initLivesPage() {
                     document.getElementById('live-id').value = data.id;
                     document.getElementById('live-titulo').value = data.title;
                     document.getElementById('live-link-youtube').value = data.youtube_live_url || '';
-                    document.getElementById('live-data-hora-inicio').value = data.start_datetime.substring(0, 16); // Formato YYYY-MM-DDTHH:MM
+                    document.getElementById('live-data-hora-inicio').value = data.start_datetime.substring(0, 16);
                     document.getElementById('live-esta-ao-vivo').checked = data.is_live_now;
                     document.getElementById('live-link-gravacao').value = data.recording_url || '';
                     document.getElementById('live-descricao').value = data.description || '';
@@ -1217,20 +1237,27 @@ async function initLivesPage() {
                     await supabaseClient.from('lives').delete().eq('id', deleteBtn.dataset.id);
                     fetchAndRenderLives();
                     showCustomAlert("Sucesso!", "Live excluída com sucesso!");
-                } catch (err) {
-                    console.error("Erro ao excluir live:", err.message);
-                    showCustomAlert("Erro ao Excluir", "Não foi possível excluir a live: " + err.message);
                 }
-            });
-        }
-    });
+            } catch (err) {
+                console.error("Erro ao excluir live:", err.message);
+                showCustomAlert("Erro ao Excluir", "Não foi possível excluir a live: " + err.message);
+            }
+        });
+    }
+});
 
-    supabaseClient.channel('public:lives').on('postgres_changes', { event: '*', schema: 'public', table: 'lives' }, fetchAndRenderLives).subscribe();
-    fetchAndRenderLives();
+supabaseClient.channel('public:lives').on('postgres_changes', { event: '*', schema: 'public', table: 'lives' }, fetchAndRenderLives).subscribe();
+fetchAndRenderLives();
 }
 
 // --- LÓGICA DA PÁGINA DE CHAT (/chat.html) ---
 async function initChatPage() {
+    if (!supabaseClient) {
+        showCustomAlert("Erro de Inicialização", "O serviço não está pronto. Redirecionando para o login.", () => {
+            window.location.href = '/login.html';
+        });
+        return;
+    }
     await checkAuthAndGetProfile();
     if (!currentUser) return;
 
@@ -1271,7 +1298,7 @@ async function initChatPage() {
                     `;
                     chatMessagesContainer.appendChild(messageEl);
                 });
-                chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight; // Rola para o final
+                chatMessagesContainer.scrollTop = chatMessagesContainer.scrollHeight;
             }
         } catch (err) {
             console.error("Erro inesperado ao buscar e renderizar mensagens do chat:", err);
@@ -1284,11 +1311,9 @@ async function initChatPage() {
             const content = chatInput.value.trim();
             if (!content) return;
 
-            chatSendBtn.disabled = true; // Desabilita o botão de envio
-            // Adicionar spinner ao botão de envio
+            chatSendBtn.disabled = true;
 
             try {
-                // Simulação de moderação por IA (chamada à API Gemini)
                 const moderatedContent = await moderateChatMessage(content);
 
                 if (moderatedContent.status === 'rejected') {
@@ -1314,13 +1339,11 @@ async function initChatPage() {
                 console.error("Erro inesperado ao enviar mensagem do chat:", err);
                 showCustomAlert("Erro Inesperado", "Ocorreu um erro inesperado ao enviar a mensagem do chat. Tente novamente.");
             } finally {
-                chatSendBtn.disabled = false; // Habilita o botão de envio
-                // Remover spinner
+                chatSendBtn.disabled = false;
             }
         });
     }
 
-    // Função de moderação de chat simulada com Gemini API
     async function moderateChatMessage(text) {
         try {
             let chatHistory = [];
@@ -1339,7 +1362,7 @@ async function initChatPage() {
                     }
                 }
             };
-            const apiKey = ""; // Canvas will provide this
+            const apiKey = "";
             const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
             const response = await fetch(apiUrl, {
                 method: 'POST',
@@ -1354,11 +1377,11 @@ async function initChatPage() {
                 return parsedJson;
             } else {
                 console.warn("Resposta inesperada da moderação de IA:", result);
-                return { status: "approved", reason: "AI response error, approved by default", text: text }; // Aprova por padrão em caso de erro da IA
+                return { status: "approved", reason: "AI response error, approved by default", text: text };
             }
         } catch (e) {
             console.error("Erro ao chamar API de moderação de IA:", e);
-            return { status: "approved", reason: "API call failed, approved by default", text: text }; // Aprova por padrão em caso de erro
+            return { status: "approved", reason: "API call failed, approved by default", text: text };
         }
     }
 
@@ -1369,6 +1392,12 @@ async function initChatPage() {
 
 // --- LÓGICA DA PÁGINA DE DOAÇÕES (/doacoes.html) ---
 async function initDoacoesPage() {
+    if (!supabaseClient) {
+        showCustomAlert("Erro de Inicialização", "O serviço não está pronto. Redirecionando para o login.", () => {
+            window.location.href = '/login.html';
+        });
+        return;
+    }
     await checkAuthAndGetProfile();
     if (!currentUser) return;
 
@@ -1378,7 +1407,6 @@ async function initDoacoesPage() {
     const cancelDoacoesBtn = document.getElementById('cancel-doacoes-btn');
     const saveDoacoesBtn = document.getElementById('save-doacoes-btn');
 
-    // Campos do formulário de doações
     const formFields = {
         pixKey: document.getElementById('form-pix-key'),
         qrCodeLink: document.getElementById('form-qr-code-link'),
@@ -1387,10 +1415,9 @@ async function initDoacoesPage() {
 
     const fetchAndRenderDoacoes = async () => {
         try {
-            // Assume que há apenas um registro de informações de doação (ID fixo ou primeiro)
-            const { data, error } = await supabaseClient.from('donation_info').select('*').limit(1).single(); // Alterado de 'informacoes_doacao' para 'donation_info'
+            const { data, error } = await supabaseClient.from('donation_info').select('*').limit(1).single();
 
-            if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
+            if (error && error.code !== 'PGRST116') {
                 console.error('Erro ao buscar informações de doação:', error);
                 if(doacoesInfoDiv) doacoesInfoDiv.innerHTML = `<p class="text-red-500">Erro ao carregar informações de doação.</p>`;
                 return;
@@ -1398,7 +1425,6 @@ async function initDoacoesPage() {
 
             if (!data) {
                 if(doacoesInfoDiv) doacoesInfoDiv.innerHTML = `<p class="text-gray-500">Nenhuma informação de doação configurada ainda.</p>`;
-                // Se não houver dados, e for admin geral, permite criar
                 if (currentUser.role === 'admin_geral') {
                     if(editDoacoesBtn) editDoacoesBtn.classList.remove('hidden');
                     if(doacoesInfoDiv) doacoesInfoDiv.classList.add('hidden');
@@ -1408,7 +1434,6 @@ async function initDoacoesPage() {
                 return;
             }
 
-            // Exibe as informações para todos os utilizadores
             if(doacoesInfoDiv) {
                 doacoesInfoDiv.innerHTML = `
                     <h2 class="text-2xl font-bold text-gray-800 mb-4">Informações para Doação</h2>
@@ -1433,7 +1458,6 @@ async function initDoacoesPage() {
                 doacoesInfoDiv.classList.remove('hidden');
             }
 
-            // Preenche o formulário se for admin geral
             if (currentUser.role === 'admin_geral') {
                 if(editDoacoesBtn) editDoacoesBtn.classList.remove('hidden');
                 formFields.pixKey.value = data.pix_key || '';
@@ -1441,7 +1465,7 @@ async function initDoacoesPage() {
                 formFields.bankDetails.value = data.bank_details || '';
                 if(saveDoacoesBtn) saveDoacoesBtn.textContent = 'Salvar Alterações';
             } else {
-                if(editDoacoesBtn) editDoacoesBtn.classList.add('hidden'); // Esconde para utilizadores comuns
+                if(editDoacoesBtn) editDoacoesBtn.classList.add('hidden');
             }
         } catch (err) {
             console.error("Erro inesperado ao buscar e renderizar informações de doação:", err);
@@ -1472,9 +1496,9 @@ async function initDoacoesPage() {
             }
 
             const updates = {
-                id: '00000000-0000-0000-0000-000000000001', // ID fixo para o singleton
+                id: '00000000-0000-0000-0000-000000000001',
                 pix_key: formFields.pixKey.value,
-                pix_qr_code_image: formFields.qrCodeLink.value, // Alterado de 'link_qr_code_pix' para 'pix_qr_code_image'
+                pix_qr_code_image: formFields.qrCodeLink.value,
                 bank_details: formFields.bankDetails.value,
                 last_updated_by: currentUser.id,
                 last_updated_by_name: currentUser.display_name || currentUser.email,
@@ -1482,7 +1506,6 @@ async function initDoacoesPage() {
             };
 
             try {
-                // Tenta fazer upsert (insere se não existe, atualiza se existe)
                 const { data, error } = await supabaseClient.from('donation_info').upsert(updates, { onConflict: 'id' });
 
                 if (error) {
@@ -1491,7 +1514,7 @@ async function initDoacoesPage() {
                 } else {
                     showCustomAlert("Sucesso!", "Informações de doação atualizadas!", () => {
                         if(doacoesForm) doacoesForm.classList.add('hidden');
-                        fetchAndRenderDoacoes(); // Recarrega para mostrar as informações atualizadas
+                        fetchAndRenderDoacoes();
                     });
                 }
             } catch (err) {
@@ -1507,6 +1530,12 @@ async function initDoacoesPage() {
 
 // --- LÓGICA DA PÁGINA DE PEDIDOS DE ORAÇÃO (/pedidos_oracao.html) ---
 async function initPedidosOracaoPage() {
+    if (!supabaseClient) {
+        showCustomAlert("Erro de Inicialização", "O serviço não está pronto. Redirecionando para o login.", () => {
+            window.location.href = '/login.html';
+        });
+        return;
+    }
     await checkAuthAndGetProfile();
     if (!currentUser) return;
 
@@ -1517,9 +1546,9 @@ async function initPedidosOracaoPage() {
 
     const fetchAndRenderPedidos = async () => {
         try {
-            const { data: pedidos, error } = await supabaseClient.from('prayer_requests') // Alterado de 'pedidos_oracao' para 'prayer_requests'
+            const { data: pedidos, error } = await supabaseClient.from('prayer_requests')
                 .select(`*, profiles(display_name, photo_url)`)
-                .order('requested_at', { ascending: false }); // Alterado de 'data_solicitacao' para 'requested_at'
+                .order('requested_at', { ascending: false });
 
             if (error) {
                 console.error('Erro ao buscar pedidos de oração:', error);
@@ -1535,9 +1564,9 @@ async function initPedidosOracaoPage() {
                     pedidos.forEach(pedido => {
                         const pedidoEl = document.createElement('div');
                         pedidoEl.className = 'bg-white p-4 rounded-lg shadow-md mb-4';
-                        const authorName = pedido.is_anonymous ? 'Anónimo' : (pedido.profiles?.display_name || 'Utilizador Anónimo'); // Alterado de 'anonimo' para 'is_anonymous'
+                        const authorName = pedido.is_anonymous ? 'Anónimo' : (pedido.profiles?.display_name || 'Utilizador Anónimo');
                         const authorAvatar = pedido.is_anonymous ? 'https://placehold.co/40x40/CCCCCC/FFFFFF?text=?' : (pedido.profiles?.photo_url || `https://placehold.co/40x40/FF7F50/FFFFFF?text=${authorName.charAt(0)}`);
-                        const pedidoDate = new Date(pedido.requested_at).toLocaleString('pt-BR'); // Alterado de 'data_solicitacao' para 'requested_at'
+                        const pedidoDate = new Date(pedido.requested_at).toLocaleString('pt-BR');
 
                         pedidoEl.innerHTML = `
                             <div class="flex items-center mb-4">
@@ -1573,7 +1602,7 @@ async function initPedidosOracaoPage() {
         pedidoForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const content = pedidoContent.value.trim();
-            const isAnonymous = pedidoAnonimo.checked; // Alterado de 'anonimo' para 'is_anonymous'
+            const isAnonymous = pedidoAnonimo.checked;
 
             if (!content) {
                 showCustomAlert("Erro", "O pedido de oração não pode estar vazio.");
@@ -1584,9 +1613,8 @@ async function initPedidosOracaoPage() {
                 const { error } = await supabaseClient.from('prayer_requests').insert({
                     content: content,
                     is_anonymous: isAnonymous,
-                    requester_id: currentUser.id, // Alterado de 'solicitante_id' para 'requester_id'
+                    requester_id: currentUser.id,
                     requested_at: new Date().toISOString(),
-                    // 'publicado_no_feed' não é mais necessário, pois todos os pedidos aparecem no feed de oração
                 });
 
                 if (error) {
@@ -1597,7 +1625,7 @@ async function initPedidosOracaoPage() {
                     pedidoContent.value = '';
                     pedidoAnonimo.checked = false;
                     showCustomAlert("Sucesso!", "O seu pedido de oração foi enviado!");
-                    fetchAndRenderPedidos(); // Atualiza a lista
+                    fetchAndRenderPedidos();
                 }
             } catch (err) {
                 console.error("Erro inesperado ao enviar pedido de oração:", err);
@@ -1606,7 +1634,6 @@ async function initPedidosOracaoPage() {
         });
     }
 
-    // Listener para interações com pedidos de oração
     if (pedidosContainer) {
         pedidosContainer.addEventListener('click', async (e) => {
             const markPrayedBtn = e.target.closest('.mark-prayed-btn');
@@ -1624,13 +1651,13 @@ async function initPedidosOracaoPage() {
 
                     let prayedByUsers = pedido.prayed_by_users || [];
                     if (prayedByUsers.includes(currentUser.id)) {
-                        prayedByUsers = prayedByUsers.filter(id => id !== currentUser.id); // Desmarcar
+                        prayedByUsers = prayedByUsers.filter(id => id !== currentUser.id);
                     } else {
-                        prayedByUsers.push(currentUser.id); // Marcar
+                        prayedByUsers.push(currentUser.id);
                     }
                     await supabaseClient.from('prayer_requests').update({ prayed_by_users: prayedByUsers }).eq('id', pedidoId);
                     showCustomAlert("Sucesso!", "Ação 'Orar' registada!");
-                    fetchAndRenderPedidos(); // Atualiza a lista para refletir a mudança
+                    fetchAndRenderPedidos();
                 } catch (err) {
                     console.error("Erro inesperado ao marcar como orou:", err);
                     showCustomAlert("Erro Inesperado", "Ocorreu um erro inesperado ao marcar como 'orou'. Tente novamente.");
@@ -1648,6 +1675,12 @@ async function initPedidosOracaoPage() {
 
 // --- LÓGICA DA PÁGINA DE SALAS DE ESTUDO VIRTUAIS (/salas_estudo.html) ---
 async function initSalasEstudoPage() {
+    if (!supabaseClient) {
+        showCustomAlert("Erro de Inicialização", "O serviço não está pronto. Redirecionando para o login.", () => {
+            window.location.href = '/login.html';
+        });
+        return;
+    }
     await checkAuthAndGetProfile();
     if (!currentUser) return;
 
@@ -1660,7 +1693,7 @@ async function initSalasEstudoPage() {
 
     const fetchAndRenderSalas = async () => {
         try {
-            const { data: salas, error } = await supabaseClient.from('virtual_study_rooms').select(`*, creator:profiles(display_name)`).order('created_at', { ascending: false }); // Alterado de 'criador' para 'creator' e 'data_criacao' para 'created_at'
+            const { data: salas, error } = await supabaseClient.from('virtual_study_rooms').select(`*, creator:profiles(display_name)`).order('created_at', { ascending: false });
 
             if (error) {
                 console.error('Erro ao buscar salas de estudo:', error);
@@ -1686,10 +1719,10 @@ async function initSalasEstudoPage() {
 
                         card.innerHTML = `${authorControls}
                             <div class="flex-1">
-                                <h3 class="text-xl font-bold text-gray-800 mb-2 pr-16">${sala.name}</h3> <!-- Alterado de 'nome_sala' para 'name' -->
+                                <h3 class="text-xl font-bold text-gray-800 mb-2 pr-16">${sala.name}</h3>
                                 <p class="text-orange-600 font-semibold">Criado por: ${sala.creator?.display_name || 'Admin'}</p>
                                 <p class="text-gray-500 mt-1">Data de Criação: ${new Date(sala.created_at).toLocaleDateString('pt-BR')}</p>
-                                ${sala.related_study_id ? `<p class="text-gray-600 mt-2">Estudo de Referência: <span class="font-semibold">${sala.related_study_id}</span></p>` : ''} <!-- related_study_id é o ID, não o título -->
+                                ${sala.related_study_id ? `<p class="text-gray-600 mt-2">Estudo de Referência: <span class="font-semibold">${sala.related_study_id}</span></p>` : ''}
                                 ${sala.meet_link ? `<a href="${sala.meet_link}" target="_blank" class="block text-center bg-blue-600 text-white px-4 py-2 rounded-lg mt-4 hover:bg-blue-700">Entrar na Sala (Google Meet)</a>` : ''}
                                 ${sala.recording_link ? `<a href="${sala.recording_link}" target="_blank" class="block text-center bg-gray-600 text-white px-4 py-2 rounded-lg mt-2 hover:bg-gray-700">Ver Gravação</a>` : ''}
                             </div>`;
@@ -1716,12 +1749,12 @@ async function initSalasEstudoPage() {
         e.preventDefault();
         const salaId = document.getElementById('sala-id').value;
         const salaData = {
-            name: document.getElementById('sala-nome').value, // Alterado de 'nome_sala' para 'name'
-            related_study_id: document.getElementById('sala-estudo-referencia').value || null, // Alterado de 'estudo_referencia' para 'related_study_id'
+            name: document.getElementById('sala-nome').value,
+            related_study_id: document.getElementById('sala-estudo-referencia').value || null,
             meet_link: document.getElementById('sala-link-meet').value,
             recording_link: document.getElementById('sala-link-gravacao').value,
-            created_by: currentUser.id, // Alterado de 'criador_id' para 'created_by'
-            created_at: new Date().toISOString() // Alterado de 'data_criacao' para 'created_at'
+            created_by: currentUser.id,
+            created_at: new Date().toISOString()
         };
 
         try {
@@ -1789,7 +1822,6 @@ async function initSalasEstudoPage() {
 
 document.addEventListener('DOMContentLoaded', () => {
     const path = window.location.pathname;
-    // Removido o '|| path === /' do login, pois o index.html já trata o redirecionamento inicial
     if (path.endsWith('/login.html')) { initLoginPage(); }
     else if (path.endsWith('/dashboard.html')) { initDashboardPage(); }
     else if (path.endsWith('/profile.html')) { initProfilePage(); }
