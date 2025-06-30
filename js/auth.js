@@ -1,5 +1,6 @@
 // Importa a função para criar o cliente do Supabase
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2';
+// CORREÇÃO: Acessa a função createClient a partir do objeto global 'supabase' fornecido pelo script CDN.
+const { createClient } = supabase;
 
 // --- Configuração Central do Supabase ---
 const SUPABASE_URL = 'https://bilhtpgelctnybjemzeg.supabase.co';
