@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salas de Estudo - SocialWeb</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .sala-card { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="bg-orange-50">
+
+    <header class="bg-white shadow-sm p-4 flex justify-between items-center sticky top-0 z-20">
+        <a href="/dashboard.html" class="text-2xl font-bold text-orange-600">SocialWeb</a>
+        <a href="/dashboard.html" class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 font-bold">Voltar ao Feed</a>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-bold text-gray-800">Salas de Estudo Virtuais</h1>
+            <button id="create-sala-btn" class="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 font-semibold flex items-center space-x-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                <span>Criar Nova Sala</span>
+            </button>
+        </div>
+        <div id="salas-estudo-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+    </main>
+
+    <!-- Modal de Sala de Estudo -->
+    <div id="sala-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg">
+            <h3 id="sala-modal-title" class="text-xl font-bold mb-4">Criar Nova Sala de Estudo</h3>
+            <form id="sala-form" class="space-y-4">
+                <input type="hidden" id="sala-id">
+                <div><label for="sala-nome" class="block text-sm font-medium text-gray-700">Nome da Sala</label><input type="text" id="sala-nome" required class="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500"></div>
+                <div><label for="sala-estudo-referencia" class="block text-sm font-medium text-gray-700">Estudo de Referência (Opcional)</label><input type="text" id="sala-estudo-referencia" placeholder="Ex: Estudo sobre Gálatas 5" class="mt-1 block w-full p-2 border border-gray-300 rounded-md"></div>
+                <div><label for="sala-link-meet" class="block text-sm font-medium text-gray-700">Link do Google Meet</label><input type="url" id="sala-link-meet" placeholder="Ex: https://meet.google.com/abc-xyz" required class="mt-1 block w-full p-2 border border-gray-300 rounded-md"></div>
+                <div><label for="sala-link-gravacao" class="block text-sm font-medium text-gray-700">Link da Gravação (Opcional)</label><input type="url" id="sala-link-gravacao" placeholder="Link para a gravação da sessão" class="mt-1 block w-full p-2 border border-gray-300 rounded-md"></div>
+                <div class="flex justify-end space-x-4 mt-6">
+                    <button type="button" id="cancel-sala-btn" class="bg-gray-200 px-4 py-2 rounded-lg font-semibold hover:bg-gray-300">Cancelar</button>
+                    <button type="submit" id="save-sala-btn" class="bg-green-500 text-white px-4 py-2 rounded-lg font-semibold">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="module" src="/js/app.js" defer></script>
+</body>
+</html>
