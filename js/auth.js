@@ -1,13 +1,18 @@
 // Importa a função para criar o cliente do Supabase
 // CORREÇÃO: Acessa a função createClient a partir do objeto global 'supabase' fornecido pelo script CDN.
-const { createClient } = supabase;
+// Não é necessário desestruturar 'createClient' se 'supabase' já é global.
+// A linha abaixo causava o erro 'supabase is not defined' porque o objeto 'supabase'
+// pode não estar completamente disponível no momento da desestruturação no topo do módulo.
+// const { createClient } = supabase; // Linha original que causava o erro.
 
 // --- Configuração Central do Supabase ---
 const SUPABASE_URL = 'https://bilhtpgelctnybjemzeg.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJpbGh0cGdlbGN0bnliamVtemVnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgyNzgzOTYsImV4cCI6MjA2Mzg1NDM5Nn0.yybV4HP0d9KAJGxMq7y8N_AHKgqPHNXoqu0oH_Waoh4';
 
-// Cria e exporta o cliente Supabase para ser usado em outras partes da aplicação
-export const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Cria e exporta o cliente Supabase para ser usado em outras partes da aplicação.
+// Agora, acessamos diretamente 'supabase.createClient' que é garantido estar disponível
+// quando este script de módulo é executado (devido ao 'defer' no script CDN).
+export const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
 /**
  * Variável global para o utilizador atual, definida após a autenticação.
