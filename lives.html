@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lives - SocialWeb</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .live-card { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="bg-orange-50">
+
+    <header class="bg-white shadow-sm p-4 flex justify-between items-center sticky top-0 z-20">
+        <a href="/dashboard.html" class="text-2xl font-bold text-orange-600">SocialWeb</a>
+        <a href="/dashboard.html" class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 font-bold">Voltar ao Feed</a>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-bold text-gray-800">Lives da Igreja</h1>
+            <button id="create-live-btn" class="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 font-semibold flex items-center space-x-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                <span>Agendar Nova Live</span>
+            </button>
+        </div>
+        <div id="lives-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+    </main>
+
+    <!-- Modal de Live -->
+    <div id="live-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg">
+            <h3 id="live-modal-title" class="text-xl font-bold mb-4">Agendar Nova Live</h3>
+            <form id="live-form" class="space-y-4">
+                <input type="hidden" id="live-id">
+                <div><label for="live-titulo" class="block text-sm font-medium text-gray-700">Título da Live</label><input type="text" id="live-titulo" required class="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500"></div>
+                <div><label for="live-link-youtube" class="block text-sm font-medium text-gray-700">Link do YouTube (Live ou Canal)</label><input type="url" id="live-link-youtube" placeholder="Ex: https://www.youtube.com/watch?v=..." required class="mt-1 block w-full p-2 border border-gray-300 rounded-md"></div>
+                <div><label for="live-data-hora-inicio" class="block text-sm font-medium text-gray-700">Data e Hora de Início</label><input type="datetime-local" id="live-data-hora-inicio" required class="mt-1 block w-full p-2 border border-gray-300 rounded-md"></div>
+                <div class="flex items-center space-x-2">
+                    <input type="checkbox" id="live-esta-ao-vivo" class="rounded text-orange-500 focus:ring-orange-500">
+                    <label for="live-esta-ao-vivo" class="text-sm font-medium text-gray-700">Está ao vivo agora?</label>
+                </div>
+                <div><label for="live-link-gravacao" class="block text-sm font-medium text-gray-700">Link da Gravação (se já disponível)</label><input type="url" id="live-link-gravacao" placeholder="Opcional: Link para a gravação após a live" class="mt-1 block w-full p-2 border border-gray-300 rounded-md"></div>
+                <div><label for="live-descricao" class="block text-sm font-medium text-gray-700">Descrição da Live</label><textarea id="live-descricao" rows="4" class="mt-1 block w-full p-2 border border-gray-300 rounded-md"></textarea></div>
+                <div class="flex justify-end space-x-4 mt-6">
+                    <button type="button" id="cancel-live-btn" class="bg-gray-200 px-4 py-2 rounded-lg font-semibold hover:bg-gray-300">Cancelar</button>
+                    <button type="submit" id="save-live-btn" class="bg-green-500 text-white px-4 py-2 rounded-lg font-semibold">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="module" src="/js/app.js" defer></script>
+</body>
+</html>
