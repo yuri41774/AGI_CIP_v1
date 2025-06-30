@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doações - SocialWeb</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-orange-50">
+
+    <header class="bg-white shadow-sm p-4 flex justify-between items-center sticky top-0 z-20">
+        <a href="/dashboard.html" class="text-2xl font-bold text-orange-600">SocialWeb</a>
+        <a href="/dashboard.html" class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 font-bold">Voltar ao Feed</a>
+    </header>
+
+    <main class="container mx-auto px-4 py-8 max-w-2xl">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-bold text-gray-800">Doações</h1>
+            <button id="edit-doacoes-btn" class="bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 font-semibold flex items-center space-x-2 hidden">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+                <span>Editar Informações</span>
+            </button>
+        </div>
+
+        <div id="doacoes-info" class="bg-white p-6 rounded-lg shadow-md">
+            <!-- Informações de doação serão injetadas aqui -->
+            <p class="text-center text-gray-500">A carregar informações de doação...</p>
+        </div>
+
+        <form id="doacoes-form" class="hidden bg-white p-6 rounded-lg shadow-md mt-8 space-y-4">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Editar Informações de Doação</h2>
+            <div>
+                <label for="form-pix-key" class="block text-sm font-medium text-gray-700">Chave Pix</label>
+                <input type="text" id="form-pix-key" placeholder="Digite a chave Pix" class="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500">
+            </div>
+            <div>
+                <label for="form-qr-code-link" class="block text-sm font-medium text-gray-700">Link do QR Code Pix (URL da imagem)</label>
+                <input type="url" id="form-qr-code-link" placeholder="Ex: https://seusite.com/qrcode.png" class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
+            </div>
+            <div>
+                <label for="form-bank-details" class="block text-sm font-medium text-gray-700">Dados Bancários (Banco, Agência, Conta, Nome)</label>
+                <textarea id="form-bank-details" rows="6" placeholder="Ex: Banco: Exemplo, Agência: 1234, Conta: 56789-0, Nome: Igreja Exemplo" class="mt-1 block w-full p-2 border border-gray-300 rounded-md"></textarea>
+            </div>
+            <div class="flex justify-end space-x-4 mt-6">
+                <button type="button" id="cancel-doacoes-btn" class="bg-gray-200 px-4 py-2 rounded-lg font-semibold hover:bg-gray-300">Cancelar</button>
+                <button type="submit" id="save-doacoes-btn" class="bg-green-500 text-white px-4 py-2 rounded-lg font-semibold">Salvar Alterações</button>
+            </div>
+        </form>
+    </main>
+
+    <script type="module" src="/js/app.js" defer></script>
+</body>
+</html>
