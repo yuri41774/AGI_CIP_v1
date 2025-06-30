@@ -3,22 +3,49 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Carregando SocialWeb...</title>
+    <title>A carregar Comunidade Internacional Plenitude...</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
-    <script type="module">
-        // Importa o cliente Supabase do módulo auth.js
-        import { supabaseClient } from '/js/auth.js';
+    <script>
+        // Configuração do Supabase (duplicada aqui para garantir o carregamento inicial)
+        // Isso garante que o supabaseClient está disponível para a lógica de redirecionamento
+        const SUPABASE_URL = 'https://bilhtpgelctnybjemzeg.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJpbGh0cGdlbGN0bnliamVtemVnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgyNzgzOTYsImV4cCI6MjA2Mzg1NDM5Nn0.yybV4HP0d9KAJGxMq7y8N_AHKgqPHNXoqu0oH_Waoh4';
+        let supabaseClient; // Declare-o com 'let'
 
-        document.addEventListener('DOMContentLoaded', async () => {
-            const { data: { session } } = await supabaseClient.auth.getSession();
-            if (session) {
-                // Se houver sessão, redireciona para o dashboard
-                window.location.href = '/dashboard.html';
+        document.addEventListener('DOMContentLoaded', () => {
+            // Garante que o objeto global 'supabase' está disponível antes de criar o cliente
+            if (typeof supabase !== 'undefined' && supabase.createClient) {
+                supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                checkSessionAndRedirect();
             } else {
-                // Se não houver sessão, redireciona para a página de login
+                // Fallback se o CDN do Supabase não carregar a tempo (deve ser raro com 'defer')
+                console.error("Supabase CDN não carregado a tempo. Redirecionando para o login.");
                 window.location.href = '/login.html';
             }
         });
+
+        async function checkSessionAndRedirect() {
+            try {
+                const { data: { session }, error } = await supabaseClient.auth.getSession();
+                if (error) {
+                    console.error("Erro ao obter sessão Supabase:", error.message);
+                    window.location.href = '/login.html';
+                    return;
+                }
+
+                if (session) {
+                    // Se houver sessão, redireciona para o dashboard
+                    window.location.href = '/dashboard.html';
+                } else {
+                    // Se não houver sessão, redireciona para a página de login
+                    window.location.href = '/login.html';
+                }
+            } catch (e) {
+                console.error("Erro inesperado durante a verificação da sessão:", e);
+                window.location.href = '/login.html'; // Redireciona para login em caso de erro
+            }
+        }
     </script>
     <style>
         body {
