@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estudos Bíblicos - SocialWeb</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .estudo-card, #estudo-modal { animation: fadeIn 0.3s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="bg-orange-50">
+
+    <header class="bg-white shadow-sm p-4 flex justify-between items-center sticky top-0 z-20">
+        <a href="/dashboard.html" class="text-2xl font-bold text-orange-600">SocialWeb</a>
+        <a href="/dashboard.html" class="bg-orange-500 text-white px-4 py-2 rounded-lg hover:bg-orange-600 font-bold">Voltar ao Feed</a>
+    </header>
+
+    <main class="container mx-auto px-4 py-8">
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-bold text-gray-800">Estudos Bíblicos</h1>
+            <button id="create-estudo-btn" class="bg-green-500 text-white px-6 py-2 rounded-lg hover:bg-green-600 font-semibold flex items-center space-x-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                <span>Criar Novo Estudo</span>
+            </button>
+        </div>
+        <div id="estudos-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+    </main>
+
+    <!-- Modal de Estudo -->
+    <div id="estudo-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg">
+            <h3 id="estudo-modal-title" class="text-xl font-bold mb-4">Criar Novo Estudo</h3>
+            <form id="estudo-form" class="space-y-4">
+                <input type="hidden" id="estudo-id">
+                <div><label for="estudo-titulo" class="block text-sm font-medium text-gray-700">Título do Estudo</label><input type="text" id="estudo-titulo" required class="mt-1 block w-full p-2 border border-gray-300 rounded-md focus:ring-orange-500 focus:border-orange-500"></div>
+                <div><label for="estudo-tipo" class="block text-sm font-medium text-gray-700">Tipo de Estudo</label>
+                    <select id="estudo-tipo" required class="mt-1 block w-full p-2 border border-gray-300 rounded-md bg-white focus:ring-orange-500 focus:border-orange-500">
+                        <option value="Texto">Texto</option>
+                        <option value="Video">Vídeo (YouTube)</option>
+                    </select>
+                </div>
+                <div id="estudo-video-field" class="hidden">
+                    <label for="estudo-link-video" class="block text-sm font-medium text-gray-700">Link do Vídeo (YouTube)</label>
+                    <input type="url" id="estudo-link-video" placeholder="Ex: https://www.youtube.com/watch?v=..." class="mt-1 block w-full p-2 border border-gray-300 rounded-md">
+                </div>
+                <div id="estudo-text-field">
+                    <label for="estudo-conteudo-texto" class="block text-sm font-medium text-gray-700">Conteúdo do Texto</label>
+                    <textarea id="estudo-conteudo-texto" rows="8" class="mt-1 block w-full p-2 border border-gray-300 rounded-md"></textarea>
+                </div>
+                <div class="flex justify-end space-x-4 mt-6">
+                    <button type="button" id="cancel-estudo-btn" class="bg-gray-200 px-4 py-2 rounded-lg font-semibold hover:bg-gray-300">Cancelar</button>
+                    <button type="submit" id="save-estudo-btn" class="bg-green-500 text-white px-4 py-2 rounded-lg font-semibold">Salvar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="module">
+        import '../js/app.js'; // Importa a lógica da página
+
+        // Lógica para mostrar/esconder campos de vídeo/texto no modal
+        document.addEventListener('DOMContentLoaded', () => {
+            const estudoTipoSelect = document.getElementById('estudo-tipo');
+            const estudoVideoField = document.getElementById('estudo-video-field');
+            const estudoTextField = document.getElementById('estudo-text-field');
+
+            const toggleEstudoFields = () => {
+                if (estudoTipoSelect.value === 'Video') {
+                    estudoVideoField.classList.remove('hidden');
+                    estudoTextField.classList.add('hidden');
+                    document.getElementById('estudo-conteudo-texto').removeAttribute('required');
+                    document.getElementById('estudo-link-video').setAttribute('required', 'required');
+                } else {
+                    estudoVideoField.classList.add('hidden');
+                    estudoTextField.classList.remove('hidden');
+                    document.getElementById('estudo-link-video').removeAttribute('required');
+                    document.getElementById('estudo-conteudo-texto').setAttribute('required', 'required');
+                }
+            };
+
+            if (estudoTipoSelect) {
+                estudoTipoSelect.addEventListener('change', toggleEstudoFields);
+                toggleEstudoFields(); // Chama na inicialização para definir o estado inicial
+            }
+        });
+    </script>
+</body>
+</html>
