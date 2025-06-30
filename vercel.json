@@ -20,6 +20,38 @@
     {
       "source": "/dashboard",
       "destination": "/dashboard.html"
+    },
+    {
+      "source": "/estudos",
+      "destination": "/estudos.html"
+    },
+    {
+      "source": "/estudo_detalhe",
+      "destination": "/estudo_detalhe.html"
+    },
+    {
+      "source": "/lives",
+      "destination": "/lives.html"
+    },
+    {
+      "source": "/chat",
+      "destination": "/chat.html"
+    },
+    {
+      "source": "/doacoes",
+      "destination": "/doacoes.html"
+    },
+    {
+      "source": "/pedidos_oracao",
+      "destination": "/pedidos_oracao.html"
+    },
+    {
+      "source": "/salas_estudo",
+      "destination": "/salas_estudo.html"
+    },
+    {
+      "source": "/admin",
+      "destination": "/admin.html"
     }
   ]
 }
