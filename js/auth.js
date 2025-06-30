@@ -1,18 +1,14 @@
-// Importa a função para criar o cliente do Supabase
-// CORREÇÃO: Acessa a função createClient a partir do objeto global 'supabase' fornecido pelo script CDN.
-// Não é necessário desestruturar 'createClient' se 'supabase' já é global.
-// A linha abaixo causava o erro 'supabase is not defined' porque o objeto 'supabase'
-// pode não estar completamente disponível no momento da desestruturação no topo do módulo.
-// const { createClient } = supabase; // Linha original que causava o erro.
-
 // --- Configuração Central do Supabase ---
-const SUPABASE_URL = 'https://bilhtpgelctnybjemzeg.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJpbGh0cGdlbGN0bnliamVtemVnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgyNzgzOTYsImV4cCI6MjA2Mzg1NDM5Nn0.yybV4HP0d9KAJGxMq7y8N_AHKgqPHNXoqu0oH_Waoh4';
+// Estas constantes serão exportadas para que o cliente Supabase possa ser criado
+// em outro lugar (e.g., app.js ou index.html) onde 'supabase' é garantido estar definido.
+export const SUPABASE_URL = 'https://bilhtpgelctnybjemzeg.supabase.co';
+export const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImJpbGh0cGdlbGN0bnliamVtemVnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgyNzgzOTYsImV4cCI6MjA2Mzg1NDM5Nn0.yybV4HP0d9KAJGxMq7y8N_AHKgqPHNXoqu0oH_Waoh4';
 
-// Cria e exporta o cliente Supabase para ser usado em outras partes da aplicação.
-// Agora, acessamos diretamente 'supabase.createClient' que é garantido estar disponível
-// quando este script de módulo é executado (devido ao 'defer' no script CDN).
-export const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// A instância do cliente Supabase NÃO será criada diretamente aqui.
+// Ela será criada no app.js (ou onde for necessário) após o CDN ser carregado.
+// Apenas declare a variável para ser usada internamente por este módulo se necessário,
+// mas ela será populada externamente.
+export let supabaseClient = null; // Será inicializado externamente
 
 /**
  * Variável global para o utilizador atual, definida após a autenticação.
@@ -21,12 +17,30 @@ export const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_
 export let currentUser = null;
 
 /**
+ * Função para definir a instância do SupabaseClient.
+ * Deve ser chamada uma vez, após o CDN do Supabase ser carregado.
+ * @param {object} client - A instância do SupabaseClient.
+ */
+export function setSupabaseClient(client) {
+    supabaseClient = client;
+    // Uma vez que o cliente está definido, podemos configurar o listener de autenticação
+    // que depende do supabaseClient.
+    setupAuthListener();
+}
+
+/**
  * Verifica a sessão do utilizador, busca os dados do perfil e define o utilizador atual.
  * Redireciona para a página de login se não houver sessão ou se o acesso for restrito.
  * @param {boolean} adminOnly - Se true, verifica se o utilizador tem a role 'admin'.
  * @returns {Promise<object|null>} O objeto do utilizador (com dados de perfil) se autenticado e autorizado, senão null.
  */
 export async function checkAuthAndGetProfile(adminOnly = false) {
+  if (!supabaseClient) {
+      console.error("SupabaseClient não inicializado em checkAuthAndGetProfile.");
+      window.location.href = '/login.html';
+      return null;
+  }
+
   const { data: { session }, error: sessionError } = await supabaseClient.auth.getSession();
 
   if (sessionError) {
@@ -75,27 +89,36 @@ export async function checkAuthAndGetProfile(adminOnly = false) {
 /**
  * Listener de autenticação global para redirecionamentos de login e logout.
  * Esta é a única fonte de verdade para o estado de autenticação.
+ * Esta função é chamada APENAS DEPOIS que o supabaseClient é definido.
  */
-supabaseClient.auth.onAuthStateChange(async (event, session) => {
-  const isOnLoginPage = window.location.pathname.endsWith('/login.html') || window.location.pathname === '/';
-
-  if (event === 'SIGNED_IN' && session) {
-    // Se o utilizador fez login e está na página de login, redireciona para o dashboard.
-    if (isOnLoginPage) {
-      window.location.href = '/dashboard.html';
+function setupAuthListener() {
+    if (!supabaseClient) {
+        console.error("Tentativa de configurar listener de autenticação antes do SupabaseClient ser inicializado.");
+        return;
     }
-    // Atualiza o currentUser globalmente após o login
-    await checkAuthAndGetProfile();
-  }
 
-  if (event === 'SIGNED_OUT') {
-    // Se o utilizador fez logout, redireciona sempre para a página de login.
-    currentUser = null; // Limpa o utilizador global
-    if (!isOnLoginPage) { // Evita loop se já estiver na página de login
-      window.location.href = '/login.html';
-    }
-  }
-});
+    supabaseClient.auth.onAuthStateChange(async (event, session) => {
+        const isOnLoginPage = window.location.pathname.endsWith('/login.html') || window.location.pathname === '/';
+
+        if (event === 'SIGNED_IN' && session) {
+            // Se o utilizador fez login e está na página de login, redireciona para o dashboard.
+            if (isOnLoginPage) {
+                window.location.href = '/dashboard.html';
+            }
+            // Atualiza o currentUser globalmente após o login
+            await checkAuthAndGetProfile();
+        }
+
+        if (event === 'SIGNED_OUT') {
+            // Se o utilizador fez logout, redireciona sempre para a página de login.
+            currentUser = null; // Limpa o utilizador global
+            if (!isOnLoginPage) { // Evita loop se já estiver na página de login
+                window.location.href = '/login.html';
+            }
+        }
+    });
+}
+
 
 // --- Funções de Modal Personalizadas (Substituem alert/confirm) ---
 /**
